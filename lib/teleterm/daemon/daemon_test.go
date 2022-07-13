@@ -54,6 +54,7 @@ func (m *mockGatewayCreator) CreateGateway(ctx context.Context, params clusters.
 		Insecure:              true,
 		WebProxyAddr:          hs.Listener.Addr().String(),
 		CLICommandProvider:    params.CLICommandProvider,
+		TCPPortAllocator:      gateway.NetTCPPortAllocator{},
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)

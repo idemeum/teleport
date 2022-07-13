@@ -274,6 +274,24 @@ func (s *Service) SetGatewayTargetSubresourceName(gatewayURI, targetSubresourceN
 	return gateway, nil
 }
 
+// SetGatewayLocalPort updates the LocalPort field of a gateway stored in s.gateways and restarts
+// the gateway under the new port without fetching new certs.
+func (s *Service) SetGatewayLocalPort(ctx context.Context, gatewayURI, localPort string) (*gateway.Gateway, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	gateway, err := s.findGateway(gatewayURI)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if err = gateway.SetLocalPortAndRestart(localPort); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return gateway, nil
+}
+
 // ListServers returns cluster servers
 func (s *Service) ListServers(ctx context.Context, clusterURI string) ([]clusters.Server, error) {
 	cluster, err := s.ResolveCluster(clusterURI)
