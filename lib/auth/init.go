@@ -426,7 +426,6 @@ func initSetDefaultInstaller(ctx context.Context, asrv *Server) error {
 }
 
 func initSetAuthPreference(ctx context.Context, asrv *Server, newAuthPref types.AuthPreference) error {
-	fmt.Println("\n\n\n\nHONK HONK HONK")
 	storedAuthPref, err := asrv.GetAuthPreference(ctx)
 	if err != nil && !trace.IsNotFound(err) {
 		return trace.Wrap(err)
