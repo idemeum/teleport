@@ -31,6 +31,7 @@ import (
 	apievents "github.com/gravitational/teleport/api/types/events"
 	"github.com/gravitational/teleport/lib/defaults"
 	"github.com/gravitational/teleport/lib/events"
+	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
 
@@ -39,7 +40,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ErrGithubNoTeams results from a github user not beloging to any teams.
+const githubOrgsURL = "https://github.com/orgs"
+
+// ErrGithubNoTeams results from a github user not belonging to any teams.
 var ErrGithubNoTeams = trace.BadParameter("user does not belong to any teams configured in connector; the configuration may have typos.")
 
 // CreateGithubAuthRequest creates a new request for Github OAuth2 flow
@@ -65,6 +68,9 @@ func (a *Server) CreateGithubAuthRequest(ctx context.Context, req types.GithubAu
 
 // upsertGithubConnector creates or updates a Github connector.
 func (a *Server) upsertGithubConnector(ctx context.Context, connector types.GithubConnector) error {
+	if err := checkGithubFeatureSupport(connector); err != nil {
+		return trace.Wrap(err)
+	}
 	if err := a.Identity.UpsertGithubConnector(ctx, connector); err != nil {
 		return trace.Wrap(err)
 	}
@@ -79,6 +85,69 @@ func (a *Server) upsertGithubConnector(ctx context.Context, connector types.Gith
 		},
 	}); err != nil {
 		log.WithError(err).Warn("Failed to emit GitHub connector create event.")
+	}
+
+	return nil
+}
+
+// checkExternalSSO returns an error if any of the Github organizations
+// specified in this connector use external SSO. SSO is a Teleport
+// Enterprise feature that should not be allowed for OSS.
+func checkGithubFeatureSupport(conn types.GithubConnector) error {
+	version := modules.GetModules().BuildType()
+	if version == modules.BuildEnterprise {
+		return nil
+	}
+
+	checkOrg := func(org string) error {
+		// A Github organization will have a "sso" page reachable if it
+		// supports external SSO. There doesn't seem to be any way to get this
+		// information from the Github REST API without being an owner of the
+		// Github organization, so check if this exists instead.
+		ctx, cancel := context.WithTimeout(context.Background(), defaults.HTTPRequestTimeout)
+		defer cancel()
+
+		url := fmt.Sprintf("%s/%s/%s", githubOrgsURL, url.PathEscape(org), "sso")
+
+		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+
+		transport, err := defaults.Transport()
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		client := http.Client{
+			Transport: transport,
+		}
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == 200 {
+			return trace.AccessDenied(
+				"Github organization %s uses external SSO, please purchase a Teleport Enterprise license if you want to authenticate with this organization",
+				org,
+			)
+		}
+
+		return nil
+	}
+
+	for _, mapping := range conn.GetTeamsToLogins() {
+		if err := checkOrg(mapping.Organization); err != nil {
+			return trace.Wrap(err)
+		}
+	}
+
+	for _, mapping := range conn.GetTeamsToRoles() {
+		if err := checkOrg(mapping.Organization); err != nil {
+			return trace.Wrap(err)
+		}
 	}
 
 	return nil
