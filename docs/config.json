@@ -697,7 +697,7 @@
           "slug": "/access-controls/getting-started/"
         },
         {
-          "title": "Guides",
+          "title": "Configure Cluster Access",
           "slug": "/access-controls/guides/",
           "entries": [
             {
@@ -732,8 +732,42 @@
               "title": "Moderated Sessions",
               "slug": "/access-controls/guides/moderated-sessions/"
             }
-          ]
+          ] 
         },
+	{
+	    "title": "Set up Access Requests",
+	    "slug": "/access-controls/access-requests/",
+	    "entries": [
+		{
+		    "title": "Mattermost",
+		    "slug":"/access-controls/access-requests/ssh-approval-mattermost/"
+		},
+		{
+		    "title": "PagerDuty",
+		    "slug":"/access-controls/access-requests/ssh-approval-pagerduty/"
+		},
+                {
+                    "title": "Jira Server",
+                    "slug":"/access-controls/access-requests/ssh-approval-jira-server/"
+                },
+		{
+		    "title": "Jira Cloud",
+		    "slug":"/access-controls/access-requests/ssh-approval-jira-cloud/"
+		},
+		{
+		    "title": "Slack",
+		    "slug":"/access-controls/access-requests/ssh-approval-slack/"
+		},
+		{
+		    "title": "Role Requests",
+		    "slug":"/access-controls/access-requests/role-requests/"
+		},
+		{
+		    "title": "Resource Requests",
+		    "slug":"/access-controls/access-requests/resource-requests/"
+		}
+	    ]
+	},
         {
           "title": "Reference",
           "slug": "/access-controls/reference/"
@@ -1324,6 +1358,46 @@
       "source": "/access-controls/guides/u2f/",
       "destination": "/access-controls/guides/webauthn/",
       "permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/",
+    	"destination": "/access-controls/access-requests/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/ssh-approval-mattermost/",
+    	"destination": "/access-controls/access-requests/ssh-approval-mattermost/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/ssh-approval-mattermost/",
+    	"destination": "/access-controls/access-requests/ssh-approval-pagerduty/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/resource-requests/",
+    	"destination": "/access-controls/access-requests/resource-requests/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/ssh-approval-jira-server/",
+    	"destination": "/access-controls/access-requests/ssh-approval-jira-server/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/ssh-approval-jira-cloud/",
+    	"destination": "/access-controls/access-requests/ssh-approval-jira-cloud/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/ssh-approval-slack/",
+    	"destination": "/access-controls/access-requests/ssh-approval-slack/",
+    	"permanent": true
+    },
+    {
+    	"source": "/enterprise/workflow/role-requests/",
+    	"destination": "/access-controls/access-requests/role-requests/",
+    	"permanent": true
     }
   ]
 }
