@@ -157,12 +157,15 @@ func testFnCacheSimple(t *testing.T, ttl time.Duration, delay time.Duration) {
 func TestFnCacheCancellation(t *testing.T) {
 	t.Parallel()
 
-	const timeout = time.Millisecond * 10
+	const shortTimeout = time.Millisecond * 20
+	const longTimeout = time.Millisecond * 200
 
 	cache, err := NewFnCache(FnCacheConfig{TTL: time.Minute})
 	require.NoError(t, err)
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// use short timeout since this operation has to wait for the full timeout, and
+	// we don't want the test to take too long.
+	ctx, cancel := context.WithTimeout(context.Background(), shortTimeout)
 	defer cancel()
 
 	blocker := make(chan struct{})
@@ -178,13 +181,20 @@ func TestFnCacheCancellation(t *testing.T) {
 	// unblock the loading operation which is still in progress
 	close(blocker)
 
-	ctx, cancel = context.WithTimeout(context.Background(), timeout)
+	// use long timeout since we need to wait for some concurrent operations to complete
+	// behind the scenes, and that can take a while in a resource-constrained environment.
+	ctx, cancel = context.WithTimeout(context.Background(), longTimeout)
 	defer cancel()
 
+	loadFnWasRun := atomic.NewBool(false)
 	v, err = cache.Get(ctx, "key", func(context.Context) (interface{}, error) {
-		t.Fatal("this should never run!")
+		loadFnWasRun.Store(true)
 		return nil, nil
 	})
+
+	if loadFnWasRun.Load() {
+		t.Fatal("loadfn was run unexpectedly")
+	}
 
 	require.NoError(t, err)
 	require.Equal(t, "val", v.(string))
