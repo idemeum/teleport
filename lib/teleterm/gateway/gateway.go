@@ -32,8 +32,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+func NewWithLocalPort(gateway Gateway, port string) (*Gateway, error) {
+	cfg := *gateway.cfg
+	cfg.LocalPort = port
+
+	newGateway, err := New(*gateway.cfg)
+	return newGateway, trace.Wrap(err)
+}
+
 // New creates an instance of Gateway. It starts a listener on the specified port but it doesn't
 // start the proxy – that's the job of Serve.
+// TODO: Bring back the previous implementation.
 func New(cfg Config) (*Gateway, error) {
 	if err := cfg.CheckAndSetDefaults(); err != nil {
 		return nil, trace.Wrap(err)

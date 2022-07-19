@@ -147,6 +147,7 @@ func (s *Service) createGateway(ctx context.Context, params CreateGatewayParams)
 		TargetSubresourceName: params.TargetSubresourceName,
 		LocalPort:             params.LocalPort,
 		CLICommandProvider:    cliCommandProvider,
+		TCPPortAllocator:      s.cfg.TCPPortAllocator,
 	}
 
 	gateway, err := s.cfg.GatewayCreator.CreateGateway(ctx, clusterCreateGatewayParams)
@@ -234,6 +235,31 @@ func (s *Service) RestartGateway(ctx context.Context, gatewayURI string) error {
 	s.gateways[oldGateway.URI().String()] = newGateway
 
 	return nil
+}
+
+func (s *Service) NewSetGatewayLocalPort(ctx context.Context, gatewayURI, localPort string) (*gateway.Gateway, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	oldGateway, err := s.findGateway(gatewayURI)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	// newGateway, err := gateway.NewWithDifferentLocalPort(ctx, &oldGateway, localPort)
+	// if err != nil {
+	// 	return nil, trace.Wrap(err)
+	// }
+
+	if err := s.removeGateway(oldGateway); err != nil {
+		// TODO: Close new gateway.
+		return nil, trace.Wrap(err)
+	}
+
+	// newGateway.SetURI(oldGateway.URI())
+	// s.gateways[oldGateway.URI().String()] = newGateway
+
+	return nil, nil
 }
 
 // findGateway assumes that mu is already held by a public method.
