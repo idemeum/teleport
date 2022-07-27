@@ -47,12 +47,12 @@ if ! gh auth status; then
  fi
 
 # check that the specified remote branches exist
-if ! git ls-remote --heads --exit-code git@github.com:gravitational/webapps.git ${WEBAPPS_BRANCH}; then
+if ! git ls-remote --heads --exit-code git@github.com:idemeum/webapps.git ${WEBAPPS_BRANCH}; then
     echo "Cannot find ${WEBAPPS_BRANCH} in the webapps repo."
     echo "Make sure that the remote branch has been pushed before running this script."
     exit 1
 fi
-if ! git ls-remote --heads --exit-code git@github.com:gravitational/teleport.git ${TELEPORT_BRANCH}; then
+if ! git ls-remote --heads --exit-code git@github.com:idemeum/teleport.git ${TELEPORT_BRANCH}; then
     echo "Cannot find ${TELEPORT_BRANCH} in the teleport repo."
     echo "Make sure that the remote branch has been pushed before running this script."
     exit 1
@@ -63,7 +63,7 @@ TEMP_DIR="$(mktemp -d)"
 pushd $TEMP_DIR
 
 # check that specified branch/commit exists in webapps repo
-git clone git@github.com:gravitational/webapps.git webapps
+git clone git@github.com:idemeum/webapps.git webapps
 pushd webapps
 git fetch --all
 # try to create target branch
@@ -81,23 +81,13 @@ COMMIT_URL="https://github.com/gravitational/webapps/commit/${COMMIT}"
 AUTO_BRANCH_NAME="webapps-auto-pr-$(date +%s)"
 
 # clone webassets repo (into 'webapps/dist')
-git clone git@github.com:gravitational/webassets.git dist
+git clone git@github.com:idemeum/webassets.git dist
 pushd dist; git checkout ${BRANCH} || git checkout -b ${BRANCH}; rm -fr ./*/
-
-# prepare webassets.e repo (in 'webapps/dist/e')
-git submodule update --init --recursive
-pushd e; git checkout ${BRANCH} || git checkout -b ${BRANCH}; rm -fr ./*/
-popd; popd
+popd
 
 # build the dist files (in 'webapps')
-make build-teleport
+make build-teleport-oss
 
-# push dist files to webassets/e repoisitory
-pushd dist/e
-git add -A .
-git commit -am "${COMMIT_DESC}" -m "${COMMIT_URL}" --allow-empty
-git push origin ${BRANCH}
-popd
 
 # push dist files to webassets repository
 pushd dist
@@ -112,15 +102,12 @@ WEBASSETS_COMMIT_SHA=$(git rev-parse HEAD)
 popd
 
 # clone teleport repo
-git clone git@github.com:gravitational/teleport.git teleport
+git clone git@github.com:idemeum/teleport.git teleport
 pushd teleport
 
 # try to create target branch
 # if it exists, check it out instead
 git checkout --track origin/${TELEPORT_BRANCH} || git checkout ${TELEPORT_BRANCH}
-
-# update git submodules (webassets/webassets.e)
-git fetch --recurse-submodules && git submodule update --init webassets
 
 # check out previously committed SHA
 pushd webassets

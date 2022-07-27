@@ -186,7 +186,7 @@ func pushCheckoutCommandsDarwin(b buildType) []string {
 		commands = append(commands,
 			`mkdir -p $WORKSPACE_DIR/go/src/github.com/gravitational/webapps`,
 			`cd $WORKSPACE_DIR/go/src/github.com/gravitational/webapps`,
-			`git clone https://github.com/gravitational/webapps.git .`,
+			`git clone https://github.com/idemeum/webapps.git .`,
 			`git checkout $(go run $WORKSPACE_DIR/go/src/github.com/gravitational/teleport/build.assets/tooling/cmd/get-webapps-version/main.go)`,
 			`cd $WORKSPACE_DIR/go/src/github.com/gravitational/teleport`,
 		)
