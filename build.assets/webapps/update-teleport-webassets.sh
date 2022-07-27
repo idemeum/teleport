@@ -63,6 +63,7 @@ TEMP_DIR="$(mktemp -d)"
 pushd $TEMP_DIR
 
 # check that specified branch/commit exists in webapps repo
+echo " ==== Cloning webapps.git -> `pwd`/webapps"
 git clone git@github.com:idemeum/webapps.git webapps
 pushd webapps
 git fetch --all
@@ -77,30 +78,35 @@ COMMIT=$(git rev-parse --short HEAD)
 # use the commit message from webapps, qualifying references to webapps PRs to that they
 # link to the correct PR from the teleport repo (#123 becomes gravitational/webapps#123)
 COMMIT_DESC=$(git log --decorate=off --oneline -1 | sed -E 's.(#[0-9]+).gravitational/webapps\1.g')
-COMMIT_URL="https://github.com/gravitational/webapps/commit/${COMMIT}"
+COMMIT_URL="https://github.com/idemeum/webapps/commit/${COMMIT}"
 AUTO_BRANCH_NAME="webapps-auto-pr-$(date +%s)"
 
 # clone webassets repo (into 'webapps/dist')
+echo " ==== Cloning webassets.git -> `pwd`/dist"
 git clone git@github.com:idemeum/webassets.git dist
 pushd dist; git checkout ${BRANCH} || git checkout -b ${BRANCH}; rm -fr ./*/
 popd
 
 # build the dist files (in 'webapps')
+echo " ==== make build-teleport-oss"
 make build-teleport-oss
 
 
 # push dist files to webassets repository
 pushd dist
+echo " ==== making commit in dist"
 git add -A .
 git commit -am "${COMMIT_DESC}" -m "${COMMIT_URL}" --allow-empty
 git push origin ${BRANCH}
+git show head --name-only
 popd
 
 # use temporary file to store new webassets commit sha
 pushd dist
 WEBASSETS_COMMIT_SHA=$(git rev-parse HEAD)
 popd
-
+echo " ==== WEBASSETS_COMMIT_SHA : ${WEBASSETS_COMMIT_SHA}"
+echo " ==== Cloning teleport.git -> `pwd`/teleport"
 # clone teleport repo
 git clone git@github.com:idemeum/teleport.git teleport
 pushd teleport
@@ -109,18 +115,25 @@ pushd teleport
 # if it exists, check it out instead
 git checkout --track origin/${TELEPORT_BRANCH} || git checkout ${TELEPORT_BRANCH}
 
+# update git submodules (webassets)
+git fetch --recurse-submodules && git submodule update --init webassets
+
 # check out previously committed SHA
 pushd webassets
+echo " ==== checkout webassets : ${WEBASSETS_COMMIT_SHA}"
+git fetch --all
 git checkout ${WEBASSETS_COMMIT_SHA}
 popd
 
 # switch to automatic branch and make a commit
+echo " ==== switch to automatic branch + push : ${AUTO_BRANCH_NAME}"
 git checkout -b ${AUTO_BRANCH_NAME}
 git add -A .
 git commit -am "[auto] Update webassets in ${TELEPORT_BRANCH}" -m "${COMMIT_DESC} ${COMMIT_URL}" -m "[source: -w ${WEBAPPS_BRANCH}] [target: -t ${TELEPORT_BRANCH}]" --allow-empty
 git push --set-upstream origin ${AUTO_BRANCH_NAME}
 
 # run 'gh' to raise a PR to merge this automatic branch into the target branch
+echo " ==== run 'gh' to raise a PR to merge this automatic branch into the target branch : ${TELEPORT_BRANCH}"
 gh pr create --base ${TELEPORT_BRANCH} --fill --label automated,webassets
 popd
 
