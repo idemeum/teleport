@@ -47,12 +47,12 @@ if ! gh auth status; then
  fi
 
 # check that the specified remote branches exist
-if ! git ls-remote --heads --exit-code git@github.com:gravitational/webapps.git ${WEBAPPS_BRANCH}; then
+if ! git ls-remote --heads --exit-code git@github.com:idemeum/webapps.git ${WEBAPPS_BRANCH}; then
     echo "Cannot find ${WEBAPPS_BRANCH} in the webapps repo."
     echo "Make sure that the remote branch has been pushed before running this script."
     exit 1
 fi
-if ! git ls-remote --heads --exit-code git@github.com:gravitational/teleport.git ${TELEPORT_BRANCH}; then
+if ! git ls-remote --heads --exit-code git@github.com:idemeum/teleport.git ${TELEPORT_BRANCH}; then
     echo "Cannot find ${TELEPORT_BRANCH} in the teleport repo."
     echo "Make sure that the remote branch has been pushed before running this script."
     exit 1
@@ -63,7 +63,7 @@ TEMP_DIR="$(mktemp -d)"
 pushd $TEMP_DIR
 
 # check that specified branch/commit exists in webapps repo
-git clone git@github.com:gravitational/webapps.git webapps
+git clone git@github.com:idemeum/webapps.git webapps
 pushd webapps
 git fetch --all
 # try to create target branch
@@ -77,32 +77,25 @@ COMMIT=$(git rev-parse --short HEAD)
 # use the commit message from webapps, qualifying references to webapps PRs to that they
 # link to the correct PR from the teleport repo (#123 becomes gravitational/webapps#123)
 COMMIT_DESC=$(git log --decorate=off --oneline -1 | sed -E 's.(#[0-9]+).gravitational/webapps\1.g')
-COMMIT_URL="https://github.com/gravitational/webapps/commit/${COMMIT}"
+COMMIT_URL="https://github.com/idemeum/webapps/commit/${COMMIT}"
 AUTO_BRANCH_NAME="webapps-auto-pr-$(date +%s)"
 
 # clone webassets repo (into 'webapps/dist')
-git clone git@github.com:gravitational/webassets.git dist
+git clone git@github.com:idemeum/webassets.git dist
 pushd dist; git checkout ${BRANCH} || git checkout -b ${BRANCH}; rm -fr ./*/
-
-# prepare webassets.e repo (in 'webapps/dist/e')
-git submodule update --init --recursive
-pushd e; git checkout ${BRANCH} || git checkout -b ${BRANCH}; rm -fr ./*/
-popd; popd
+popd
 
 # build the dist files (in 'webapps')
-make build-teleport
+make build-teleport-oss
 
-# push dist files to webassets/e repoisitory
-pushd dist/e
-git add -A .
-git commit -am "${COMMIT_DESC}" -m "${COMMIT_URL}" --allow-empty
-git push origin ${BRANCH}
-popd
 
 # push dist files to webassets repository
 pushd dist
 git add -A .
 git commit -am "${COMMIT_DESC}" -m "${COMMIT_URL}" --allow-empty
+echo "Dist commit"
+git show head --name-only
+echo "Pushing dist with commit to origin -> `git config --get remote.origin.url`"
 git push origin ${BRANCH}
 popd
 
@@ -112,18 +105,19 @@ WEBASSETS_COMMIT_SHA=$(git rev-parse HEAD)
 popd
 
 # clone teleport repo
-git clone git@github.com:gravitational/teleport.git teleport
+git clone git@github.com:idemeum/teleport.git teleport
 pushd teleport
 
 # try to create target branch
 # if it exists, check it out instead
 git checkout --track origin/${TELEPORT_BRANCH} || git checkout ${TELEPORT_BRANCH}
 
-# update git submodules (webassets/webassets.e)
+# update git submodules (webassets)
 git fetch --recurse-submodules && git submodule update --init webassets
 
 # check out previously committed SHA
 pushd webassets
+echo "Submodule webassets origin -> `git config --get remote.origin.url`"
 git checkout ${WEBASSETS_COMMIT_SHA}
 popd
 
@@ -131,10 +125,10 @@ popd
 git checkout -b ${AUTO_BRANCH_NAME}
 git add -A .
 git commit -am "[auto] Update webassets in ${TELEPORT_BRANCH}" -m "${COMMIT_DESC} ${COMMIT_URL}" -m "[source: -w ${WEBAPPS_BRANCH}] [target: -t ${TELEPORT_BRANCH}]" --allow-empty
+echo "Putomatic branch commit : ${AUTO_BRANCH_NAME}"
+git show head --name-only
+echo "Pushing auto branch to origin -> `git config --get remote.origin.url`"
 git push --set-upstream origin ${AUTO_BRANCH_NAME}
-
-# run 'gh' to raise a PR to merge this automatic branch into the target branch
-gh pr create --base ${TELEPORT_BRANCH} --fill --label automated,webassets
 popd
 
 # clean up all the cloned repos
