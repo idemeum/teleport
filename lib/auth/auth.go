@@ -1943,6 +1943,7 @@ func (a *Server) ExtendWebSession(ctx context.Context, req WebSessionReq, identi
 		SessionTTL:           sessionTTL,
 		AccessRequests:       accessRequests,
 		RequestedResourceIDs: allowedResourceIDs,
+		IDPSessionIndex:      prevSession.GetIDPSessionIndex(),
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -2517,6 +2518,7 @@ func (a *Server) NewWebSession(req types.NewWebSessionRequest) (types.WebSession
 		BearerTokenExpires: startTime.UTC().Add(bearerTokenTTL),
 		LoginTime:          req.LoginTime,
 		IdleTimeout:        types.Duration(netCfg.GetWebIdleTimeout()),
+		IDPSessionIndex:    req.IDPSessionIndex,
 	}
 	UserLoginCount.Inc()
 

@@ -1021,11 +1021,12 @@ func (c *Client) ValidateSAMLResponse(ctx context.Context, re string) (*SAMLAuth
 		return nil, trace.Wrap(err)
 	}
 	response := SAMLAuthResponse{
-		Username: rawResponse.Username,
-		Identity: rawResponse.Identity,
-		Cert:     rawResponse.Cert,
-		Req:      rawResponse.Req,
-		TLSCert:  rawResponse.TLSCert,
+		Username:        rawResponse.Username,
+		Identity:        rawResponse.Identity,
+		Cert:            rawResponse.Cert,
+		Req:             rawResponse.Req,
+		TLSCert:         rawResponse.TLSCert,
+		IDPSessionIndex: rawResponse.IDPSessionIndex,
 	}
 	if len(rawResponse.Session) != 0 {
 		session, err := services.UnmarshalWebSession(rawResponse.Session)

@@ -357,6 +357,8 @@ type SAMLAuthResponse struct {
 	// HostSigners is a list of signing host public keys
 	// trusted by proxy, used in console login
 	HostSigners []types.CertAuthority `json:"host_signers"`
+	// IDPSessionIndex is Session index received in SAML response, used for checking IDP logout.
+	IDPSessionIndex string `json:"idp_session_index,omitempty"`
 }
 
 // ValidateSAMLResponse consumes attribute statements from SAML identity provider
@@ -513,11 +515,12 @@ func (a *Server) validateSAMLResponse(ctx context.Context, diagCtx *ssoDiagConte
 	// If the request is coming from a browser, create a web session.
 	if request.CreateWebSession {
 		session, err := a.createWebSession(ctx, types.NewWebSessionRequest{
-			User:       user.GetName(),
-			Roles:      user.GetRoles(),
-			Traits:     user.GetTraits(),
-			SessionTTL: params.sessionTTL,
-			LoginTime:  a.clock.Now().UTC(),
+			User:            user.GetName(),
+			Roles:           user.GetRoles(),
+			Traits:          user.GetTraits(),
+			SessionTTL:      params.sessionTTL,
+			LoginTime:       a.clock.Now().UTC(),
+			IDPSessionIndex: assertionInfo.SessionIndex,
 		})
 
 		if err != nil {

@@ -61,6 +61,10 @@ type WebSession interface {
 	GetUser() string
 	// SetUser sets user associated with this session
 	SetUser(string)
+	// GetIDPSessionIndex returns SAML IDP session idnex
+	GetIDPSessionIndex() string
+	// SetIDPSessionIndex sets SAML IDP session idnex
+	SetIDPSessionIndex(string)
 	// GetPub is returns public certificate signed by auth server
 	GetPub() []byte
 	// GetPriv returns private OpenSSH key used to auth with SSH nodes
@@ -205,6 +209,16 @@ func (ws *WebSessionV2) SetUser(u string) {
 // GetUser returns the user this session is associated with
 func (ws *WebSessionV2) GetUser() string {
 	return ws.Spec.User
+}
+
+// SetUser sets user associated with this session
+func (ws *WebSessionV2) SetIDPSessionIndex(v string) {
+	ws.Spec.IDPSessionIndex = v
+}
+
+// GetUser returns the user this session is associated with
+func (ws *WebSessionV2) GetIDPSessionIndex() string {
+	return ws.Spec.IDPSessionIndex
 }
 
 // GetShortName returns visible short name used in logging
@@ -546,6 +560,8 @@ type NewWebSessionRequest struct {
 	AccessRequests []string
 	// RequestedResourceIDs optionally lists requested resources
 	RequestedResourceIDs []ResourceID
+	// SAMl IDP session idex to track for SLO
+	IDPSessionIndex string
 }
 
 // Check validates the request.

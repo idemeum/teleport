@@ -2459,6 +2459,8 @@ message WebSessionSpecV2 {
     // IdleTimeout is the max time a user can be inactive in a session.
     int64 IdleTimeout = 9
         [ (gogoproto.jsontag) = "idle_timeout", (gogoproto.casttype) = "Duration" ];
+    // SAMl IDP session idex to track for SLO
+    string IDPSessionIndex = 10 [ (gogoproto.jsontag) = "idp_session_index,omitempty" ];
 }
 
 // WebSessionFilter encodes cache watch parameters for filtering web sessions.
@@ -3507,6 +3509,9 @@ message SessionTrackerSpecV1 {
 
     // DesktopName is the windows desktop server this session belongs to.
     string DesktopName = 20 [ (gogoproto.jsontag) = "desktop_name,omitempty" ];
+
+    // IDPSessionIndex is SAML session index from asserrtion
+    string IDPSessionIndex = 1000 [ (gogoproto.jsontag) = "idp_session_index,omitempty" ];
 }
 
 // SessionTrackerPolicySet is a set of RBAC policies held by the session tracker

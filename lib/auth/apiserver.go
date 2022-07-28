@@ -1108,6 +1108,8 @@ type samlAuthRawResponse struct {
 	HostSigners []json.RawMessage `json:"host_signers"`
 	// TLSCert is TLS certificate authority certificate
 	TLSCert []byte `json:"tls_cert,omitempty"`
+	// IDPSessionIndex is Session index received in SAML response, used for checking IDP logout.
+	IDPSessionIndex string `json:"idp_session_index,omitempty"`
 }
 
 func (s *APIServer) validateSAMLResponse(auth ClientI, w http.ResponseWriter, r *http.Request, p httprouter.Params, version string) (interface{}, error) {

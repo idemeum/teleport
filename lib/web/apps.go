@@ -215,12 +215,16 @@ func (h *Handler) createAppSession(w http.ResponseWriter, r *http.Request, p htt
 			ServerNamespace: apidefaults.Namespace,
 		},
 		SessionMetadata: apievents.SessionMetadata{
-			SessionID: identity.RouteToApp.SessionID,
-			WithMFA:   identity.MFAVerified,
+			SessionID:       identity.RouteToApp.SessionID,
+			WithMFA:         identity.MFAVerified,
+			IDPSessionIndex: ctx.GetIDPSessionIndex(),
 		},
 		UserMetadata: userMetadata,
 		ConnectionMetadata: apievents.ConnectionMetadata{
 			RemoteAddr: r.RemoteAddr,
+		},
+		ClientMetadata: apievents.ClientMetadata{
+			UserAgent: r.UserAgent(),
 		},
 		PublicAddr: identity.RouteToApp.PublicAddr,
 		AppMetadata: apievents.AppMetadata{

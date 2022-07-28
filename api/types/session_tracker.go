@@ -109,6 +109,9 @@ type SessionTracker interface {
 
 	// GetLastActive returns the time at which the session was last active (i.e used by any participant).
 	GetLastActive() time.Time
+
+	// GetIDPSessionIndex returns SAML IDP session index
+	GetIDPSessionIndex() string
 }
 
 func NewSessionTracker(spec SessionTrackerSpecV1) (SessionTracker, error) {
@@ -348,4 +351,9 @@ func (s *SessionTrackerV1) GetLastActive() time.Time {
 	}
 
 	return last
+}
+
+// GetIDPSessionIndex returns SAML IDP session index
+func (s *SessionTrackerV1) GetIDPSessionIndex() string {
+	return s.Spec.IDPSessionIndex
 }

@@ -110,6 +110,11 @@ func (c *SessionContext) Invalidate() error {
 	return c.parent.invalidateSession(c)
 }
 
+// GetIDPSessionIndex Returns SAML IDP session index.
+func (c *SessionContext) GetIDPSessionIndex() string {
+	return c.GetIDPSessionIndex()
+}
+
 func (c *SessionContext) validateBearerToken(ctx context.Context, token string) error {
 	fetchedToken, err := c.parent.readBearerToken(ctx, types.GetWebTokenRequest{
 		User:  c.user,
