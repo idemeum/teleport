@@ -75,12 +75,12 @@ import (
 
 const (
 	// ssoLoginConsoleErr is a generic error message to hide revealing sso login failure msgs.
-	ssoLoginConsoleErr = "Failed to login. Please check Teleport's log for more details."
+	ssoLoginConsoleErr = "Failed to login. Please contact ideneum support."
 	metaRedirectHTML   = `
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Teleport Redirection Service</title>
+		<title>Idemeum Redirection Service</title>
 		<meta http-equiv="cache-control" content="no-cache"/>
 		<meta http-equiv="refresh" content="0;URL='{{.}}'" />
 	</head>
