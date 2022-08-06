@@ -89,6 +89,8 @@ type Config struct {
 	// WriteTargetValue is the ratio of consumed write capacity to provisioned
 	// capacity. Required to be set if auto scaling is enabled.
 	WriteTargetValue float64 `json:"write_target_value,omitempty"`
+	// Tenant is value to be used as partition key.
+	TenantId string `json:"tenant_id,omitempty"`
 }
 
 // CheckAndSetDefaults is a helper returns an error if the supplied configuration
@@ -97,6 +99,10 @@ func (cfg *Config) CheckAndSetDefaults() error {
 	// Table name is required.
 	if cfg.TableName == "" {
 		return trace.BadParameter("DynamoDB: table_name is not specified")
+	}
+
+	if cfg.TenantId == "" {
+		cfg.TenantId = hashKey
 	}
 
 	if cfg.ReadCapacityUnits == 0 {
@@ -434,7 +440,7 @@ func (b *Backend) DeleteRange(ctx context.Context, startKey, endKey []byte) erro
 				DeleteRequest: &dynamodb.DeleteRequest{
 					Key: map[string]*dynamodb.AttributeValue{
 						hashKeyKey: {
-							S: aws.String(hashKey),
+							S: aws.String(b.Config.TenantId),
 						},
 						fullPathKey: {
 							S: aws.String(record.FullPath),
@@ -487,7 +493,7 @@ func (b *Backend) CompareAndSwap(ctx context.Context, expected backend.Item, rep
 		return nil, trace.BadParameter("expected and replaceWith keys should match")
 	}
 	r := record{
-		HashKey:   hashKey,
+		HashKey:   b.Config.TenantId,
 		FullPath:  prependPrefix(replaceWith.Key),
 		Value:     replaceWith.Value,
 		Timestamp: time.Now().UTC().Unix(),
@@ -561,7 +567,7 @@ func (b *Backend) KeepAlive(ctx context.Context, lease backend.Lease, expires ti
 		TableName: aws.String(b.TableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			hashKeyKey: {
-				S: aws.String(hashKey),
+				S: aws.String(b.Config.TenantId),
 			},
 			fullPathKey: {
 				S: aws.String(prependPrefix(lease.Key)),
@@ -707,7 +713,7 @@ func (b *Backend) getRecords(ctx context.Context, startKey, endKey string, limit
 	query := "HashKey = :hashKey AND FullPath BETWEEN :fullPath AND :rangeEnd"
 	attrV := map[string]interface{}{
 		":fullPath":  startKey,
-		":hashKey":   hashKey,
+		":hashKey":   b.Config.TenantId,
 		":timestamp": b.clock.Now().UTC().Unix(),
 		":rangeEnd":  endKey,
 	}
@@ -798,7 +804,7 @@ func trimPrefix(key string) []byte {
 // depending on mode, either creates, updates or forces create/update
 func (b *Backend) create(ctx context.Context, item backend.Item, mode int) error {
 	r := record{
-		HashKey:   hashKey,
+		HashKey:   b.Config.TenantId,
 		FullPath:  prependPrefix(item.Key),
 		Value:     item.Value,
 		Timestamp: time.Now().UTC().Unix(),
@@ -834,7 +840,7 @@ func (b *Backend) create(ctx context.Context, item backend.Item, mode int) error
 
 func (b *Backend) deleteKey(ctx context.Context, key []byte) error {
 	av, err := dynamodbattribute.MarshalMap(keyLookup{
-		HashKey:  hashKey,
+		HashKey:  b.Config.TenantId,
 		FullPath: prependPrefix(key),
 	})
 	if err != nil {
@@ -849,7 +855,7 @@ func (b *Backend) deleteKey(ctx context.Context, key []byte) error {
 
 func (b *Backend) getKey(ctx context.Context, key []byte) (*record, error) {
 	av, err := dynamodbattribute.MarshalMap(keyLookup{
-		HashKey:  hashKey,
+		HashKey:  b.Config.TenantId,
 		FullPath: prependPrefix(key),
 	})
 	if err != nil {
