@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/gravitational/teleport/lib/publisher"
 	"io"
 	"io/fs"
 	"net"
@@ -1508,6 +1509,8 @@ func (process *TeleportProcess) initAuthService() error {
 		KeyStoreConfig:          cfg.Auth.KeyStore,
 		Emitter:                 checkingEmitter,
 		Streamer:                events.NewReportingStreamer(checkingStreamer, process.Config.UploadEventsC),
+		TenantUrl:               cfg.TenantUrl,
+		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
 	})
 	if err != nil {
 		return trace.Wrap(err)

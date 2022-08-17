@@ -714,6 +714,12 @@ type Auth struct {
 
 	// TunnelStrategy configures the tunnel strategy used by the cluster.
 	TunnelStrategy *types.TunnelStrategyV1 `yaml:"tunnel_strategy,omitempty"`
+
+	AppPublisherConfig *AppPublisherConfig `yaml:"app_publisher_config,omitempty"`
+}
+
+type AppPublisherConfig struct {
+	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
 }
 
 // CAKeyParams configures how CA private keys will be created and stored.

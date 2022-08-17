@@ -21,6 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/gravitational/teleport/lib/publisher"
 	"strings"
 	"time"
 
@@ -170,6 +171,12 @@ type InitConfig struct {
 	WindowsDesktops services.WindowsDesktops
 
 	SessionTrackerService services.SessionTrackerService
+
+	//Tenant url
+	TenantUrl string
+
+	//App Publisher
+	AppPublisher publisher.AppPublisher
 }
 
 // Init instantiates and configures an instance of AuthServer

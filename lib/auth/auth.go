@@ -32,6 +32,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/gravitational/teleport/lib/publisher"
 	"math"
 	"math/big"
 	insecurerand "math/rand"
@@ -175,6 +176,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 	}
 
 	closeCtx, cancelFunc := context.WithCancel(context.TODO())
+
 	as := Server{
 		bk:              cfg.Backend,
 		limiter:         limiter,
@@ -208,6 +210,8 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		keyStore:     keyStore,
 		getClaimsFun: getClaims,
 		inventory:    inventory.NewController(cfg.Presence),
+		tenantUrl:    cfg.TenantUrl,
+		AppPublisher: cfg.AppPublisher,
 	}
 	for _, o := range opts {
 		o(&as)
@@ -377,6 +381,15 @@ type Server struct {
 	getClaimsFun func(closeCtx context.Context, oidcClient *oidc.Client, connector types.OIDCConnector, code string) (jose.Claims, error)
 
 	inventory *inventory.Controller
+
+	//Tenant Url
+	tenantUrl string
+	//App Publisher
+	AppPublisher publisher.AppPublisher
+}
+
+func (a *Server) GetTenantUrl() string {
+	return a.tenantUrl
 }
 
 func (a *Server) CloseContext() context.Context {

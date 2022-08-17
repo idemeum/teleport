@@ -20,6 +20,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/gravitational/teleport/lib/publisher"
 	"io"
 	"net"
 	"net/http"
@@ -570,6 +571,9 @@ type AuthConfig struct {
 
 	// KeyStore configuration. Handles CA private keys which may be held in a HSM.
 	KeyStore keystore.Config
+
+	//
+	AppPublisherConfig publisher.AppPublisherConfig
 }
 
 // SSHConfig configures SSH server node role

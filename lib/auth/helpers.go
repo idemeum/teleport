@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"github.com/gravitational/teleport/lib/publisher"
 	"net"
 	"os"
 	"path/filepath"
@@ -243,6 +244,8 @@ func NewTestAuthServer(cfg TestAuthServerConfig) (*TestAuthServer, error) {
 		Streamer:               cfg.Streamer,
 		SkipPeriodicOperations: true,
 		Emitter:                emitter,
+		AppPublisher:           publisher.NewAppPublisher(publisher.AppPublisherConfig{}),
+		TenantUrl:              "https://test.idemeum.com",
 	}, WithClock(cfg.Clock))
 	if err != nil {
 		return nil, trace.Wrap(err)
