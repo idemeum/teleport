@@ -32,6 +32,35 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+func (h *Handler) replaceUserTraits(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	clt, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	var req *replaceUserTraitsRequest
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if err := req.checkAndSetDefaults(); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	user, err := clt.GetUser(req.Name, false)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	user.SetTraits(req.Traits)
+
+	if err := clt.UpdateUser(r.Context(), user); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return ui.NewUser(user)
+}
+
 func (h *Handler) updateUserHandle(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
 	clt, err := ctx.GetClient()
 	if err != nil {
@@ -271,6 +300,21 @@ func (r *saveUserRequest) checkAndSetDefaults() error {
 	}
 	if len(r.Roles) == 0 {
 		return trace.BadParameter("missing roles")
+	}
+	return nil
+}
+
+type replaceUserTraitsRequest struct {
+	Name   string              `json:"name"`
+	Traits map[string][]string `json:"traits"`
+}
+
+func (r *replaceUserTraitsRequest) checkAndSetDefaults() error {
+	if r.Name == "" {
+		return trace.BadParameter("missing user name")
+	}
+	if r.Traits == nil {
+		return trace.BadParameter("missing traits")
 	}
 	return nil
 }
