@@ -776,6 +776,7 @@ func (a *ServerWithRoles) PingInventory(ctx context.Context, req proto.Inventory
 }
 
 func (a *ServerWithRoles) UpsertNode(ctx context.Context, s types.Server) (*types.KeepAlive, error) {
+	log.Infof("Add or update server :%v", s.GetName())
 	if err := a.action(s.GetNamespace(), types.KindNode, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -3590,10 +3591,15 @@ func (a *ServerWithRoles) GetDatabaseServers(ctx context.Context, namespace stri
 
 // UpsertDatabaseServer creates or updates a new database proxy server.
 func (a *ServerWithRoles) UpsertDatabaseServer(ctx context.Context, server types.DatabaseServer) (*types.KeepAlive, error) {
+	log.Infof("Add or update database server: %v", server.GetName())
 	if err := a.action(server.GetNamespace(), types.KindDatabaseServer, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.UpsertDatabaseServer(ctx, server)
+	keepAlive, err := a.authServer.UpsertDatabaseServer(ctx, server)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return keepAlive, err
 }
 
 // DeleteDatabaseServer removes the specified database proxy server.
@@ -3601,7 +3607,11 @@ func (a *ServerWithRoles) DeleteDatabaseServer(ctx context.Context, namespace, h
 	if err := a.action(namespace, types.KindDatabaseServer, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteDatabaseServer(ctx, namespace, hostID, name)
+	err := a.authServer.DeleteDatabaseServer(ctx, namespace, hostID, name)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return err
 }
 
 // DeleteAllDatabaseServers removes all registered database proxy servers.
@@ -3609,7 +3619,11 @@ func (a *ServerWithRoles) DeleteAllDatabaseServers(ctx context.Context, namespac
 	if err := a.action(namespace, types.KindDatabaseServer, types.VerbList, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteAllDatabaseServers(ctx, namespace)
+	err := a.authServer.DeleteAllDatabaseServers(ctx, namespace)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return err
 }
 
 // SignDatabaseCSR generates a client certificate used by proxy when talking
@@ -3710,10 +3724,16 @@ func (a *ServerWithRoles) GetApplicationServers(ctx context.Context, namespace s
 
 // UpsertApplicationServer registers an application server.
 func (a *ServerWithRoles) UpsertApplicationServer(ctx context.Context, server types.AppServer) (*types.KeepAlive, error) {
+	log.Infof("Add or update app server :%v", server.GetName())
 	if err := a.action(server.GetNamespace(), types.KindAppServer, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.UpsertApplicationServer(ctx, server)
+	keepAlive, err := a.authServer.UpsertApplicationServer(ctx, server)
+
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return keepAlive, err
 }
 
 // DeleteApplicationServer deletes specified application server.
@@ -3721,7 +3741,11 @@ func (a *ServerWithRoles) DeleteApplicationServer(ctx context.Context, namespace
 	if err := a.action(namespace, types.KindAppServer, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteApplicationServer(ctx, namespace, hostID, name)
+	err := a.authServer.DeleteApplicationServer(ctx, namespace, hostID, name)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return err
 }
 
 // DeleteAllApplicationServers deletes all registered application servers.
@@ -3729,7 +3753,11 @@ func (a *ServerWithRoles) DeleteAllApplicationServers(ctx context.Context, names
 	if err := a.action(namespace, types.KindAppServer, types.VerbList, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteAllApplicationServers(ctx, namespace)
+	err := a.authServer.DeleteAllApplicationServers(ctx, namespace)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return err
 }
 
 // GetAppServers gets all application servers.
@@ -4533,10 +4561,16 @@ func (a *ServerWithRoles) GetWindowsDesktopService(ctx context.Context, name str
 
 // UpsertWindowsDesktopService creates or updates a new windows desktop service.
 func (a *ServerWithRoles) UpsertWindowsDesktopService(ctx context.Context, s types.WindowsDesktopService) (*types.KeepAlive, error) {
+	log.Infof("Add or update the window desktop service: %v", s.GetName())
 	if err := a.action(apidefaults.Namespace, types.KindWindowsDesktopService, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.UpsertWindowsDesktopService(ctx, s)
+
+	keepAlive, err := a.authServer.UpsertWindowsDesktopService(ctx, s)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return keepAlive, err
 }
 
 // DeleteWindowsDesktopService removes the specified windows desktop service.
@@ -4544,7 +4578,11 @@ func (a *ServerWithRoles) DeleteWindowsDesktopService(ctx context.Context, name 
 	if err := a.action(apidefaults.Namespace, types.KindWindowsDesktopService, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteWindowsDesktopService(ctx, name)
+	err := a.authServer.DeleteWindowsDesktopService(ctx, name)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return err
 }
 
 // DeleteAllWindowsDesktopServices removes all registered windows desktop services.
@@ -4552,7 +4590,11 @@ func (a *ServerWithRoles) DeleteAllWindowsDesktopServices(ctx context.Context) e
 	if err := a.action(apidefaults.Namespace, types.KindWindowsDesktopService, types.VerbList, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteAllWindowsDesktopServices(ctx)
+	err := a.authServer.DeleteAllWindowsDesktopServices(ctx)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return err
 }
 
 // GetWindowsDesktops returns all registered windows desktop hosts.
