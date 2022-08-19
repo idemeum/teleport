@@ -796,7 +796,7 @@ func (s *WindowsService) connectRDP(ctx context.Context, log logrus.FieldLogger,
 		return authCtx.Checker.CheckAccess(
 			desktop,
 			mfaParams,
-			services.NewWindowsLoginMatcher(login))
+			services.NewWindowsLoginMatcher(desktop.GetIdemeumAppId(), login))
 	}
 
 	// Use a context that is canceled when we're done handling

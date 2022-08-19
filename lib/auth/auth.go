@@ -32,7 +32,6 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/gravitational/teleport/lib/publisher"
 	"math"
 	"math/big"
 	insecurerand "math/rand"
@@ -41,6 +40,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/coreos/go-oidc/jose"
 	"github.com/coreos/go-oidc/oauth2"
@@ -3274,7 +3275,7 @@ func (a *Server) isMFARequired(ctx context.Context, checker services.AccessCheck
 			err := checker.CheckAccess(
 				n,
 				services.AccessMFAParams{},
-				services.NewLoginMatcher(t.Node.Login),
+				services.NewLoginMatcher(n.GetIdemeumAppId(), t.Node.Login),
 			)
 
 			// Ignore other errors; they'll be caught on the real access attempt.
@@ -3353,10 +3354,9 @@ func (a *Server) isMFARequired(ctx context.Context, checker services.AccessCheck
 		if len(desktops) == 0 {
 			return nil, trace.NotFound("windows desktop %q not found", t.WindowsDesktop.GetWindowsDesktop())
 		}
-
 		noMFAAccessErr = checker.CheckAccess(desktops[0],
 			services.AccessMFAParams{},
-			services.NewWindowsLoginMatcher(t.WindowsDesktop.GetLogin()))
+			services.NewWindowsLoginMatcher(desktops[0].GetIdemeumAppId(), t.WindowsDesktop.GetLogin()))
 
 	default:
 		return nil, trace.BadParameter("unknown Target %T", req.Target)

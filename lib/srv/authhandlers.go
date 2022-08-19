@@ -468,7 +468,7 @@ func (h *AuthHandlers) canLoginWithRBAC(cert *ssh.Certificate, clusterName strin
 	if err := accessChecker.CheckAccess(
 		h.c.Server.GetInfo(),
 		mfaParams,
-		services.NewLoginMatcher(osUser),
+		services.NewLoginMatcher(h.c.Server.GetInfo().GetIdemeumAppId(), osUser),
 	); err != nil {
 		return trace.AccessDenied("user %s@%s is not authorized to login as %v@%s: %v",
 			teleportUser, ca.GetClusterName(), osUser, clusterName, err)

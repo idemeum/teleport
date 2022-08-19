@@ -1789,6 +1789,9 @@ message CertExtension {
 // RoleConditions is a set of conditions that must all match to be allowed or
 // denied access.
 message RoleConditions {
+    // IdemeumEntitlements is a list of entitlements set by idemeum.
+    repeated string IdemeumEntitlements = 1000 [ (gogoproto.jsontag) = "idemeum_entitlements,omitempty" ];
+
     // Logins is a list of *nix system logins.
     repeated string Logins = 1 [ (gogoproto.jsontag) = "logins,omitempty" ];
 

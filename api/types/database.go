@@ -35,6 +35,8 @@ import (
 type Database interface {
 	// ResourceWithLabels provides common resource methods.
 	ResourceWithLabels
+	// GetIdemeumAppId returns the idemeum id.
+	GetIdemeumAppId() string
 	// GetNamespace returns the database namespace.
 	GetNamespace() string
 	// GetStaticLabels returns the database static labels.
@@ -124,6 +126,14 @@ func NewDatabaseV3(meta Metadata, spec DatabaseSpecV3) (*DatabaseV3, error) {
 		return nil, trace.Wrap(err)
 	}
 	return database, nil
+}
+
+// GetIdemeumAppId returns idemeum id label
+func (d *DatabaseV3) GetIdemeumAppId() string {
+	if d.Metadata.Labels != nil {
+		return d.Metadata.Labels["idemeum_app_id"]
+	}
+	return ""
 }
 
 // GetVersion returns the database resource version.

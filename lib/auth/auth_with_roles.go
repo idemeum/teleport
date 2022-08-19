@@ -18,9 +18,10 @@ package auth
 
 import (
 	"context"
-	"github.com/gravitational/teleport/lib/publisher"
 	"net/url"
 	"time"
+
+	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/coreos/go-semver/semver"
 
@@ -1265,7 +1266,7 @@ func (n *nodeChecker) CanAccess(resource types.Resource) error {
 
 	// Check if we can access the node with any of our possible logins.
 	for _, login := range n.accessChecker.GetAllLogins() {
-		err := n.accessChecker.CheckAccess(server, services.AccessMFAParams{Verified: true}, services.NewLoginMatcher(login))
+		err := n.accessChecker.CheckAccess(server, services.AccessMFAParams{Verified: true}, services.NewLoginMatcher(server.GetIdemeumAppId(), login))
 		if err == nil {
 			return nil
 		}

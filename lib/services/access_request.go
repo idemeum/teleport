@@ -1437,9 +1437,11 @@ func roleAllowsResource(
 	loginHint string,
 ) (bool, error) {
 	roleSet := RoleSet{role}
+
 	var matchers []RoleMatcher
 	if len(loginHint) > 0 {
-		matchers = append(matchers, NewLoginMatcher(loginHint))
+		var id = resource.GetAllLabels()["idemeum_app_id"]
+		matchers = append(matchers, NewLoginMatcher(id, loginHint))
 	}
 	err := roleSet.checkAccess(resource, AccessMFAParams{Verified: true}, matchers...)
 	if trace.IsAccessDenied(err) {

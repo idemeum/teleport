@@ -144,6 +144,8 @@ type WindowsDesktop interface {
 	GetDomain() string
 	// GetHostID returns the ID of the Windows Desktop Service reporting the desktop.
 	GetHostID() string
+	// GetIdemeumAppId returns idemeum id label
+	GetIdemeumAppId() string
 }
 
 var _ WindowsDesktop = &WindowsDesktopV3{}
@@ -217,6 +219,14 @@ func (d *WindowsDesktopV3) LabelsString() string {
 // GetDomain returns the Active Directory domain of this host.
 func (d *WindowsDesktopV3) GetDomain() string {
 	return d.Spec.Domain
+}
+
+// GetIdemeumAppId returns idemeum id label
+func (d *WindowsDesktopV3) GetIdemeumAppId() string {
+	if d.Metadata.Labels != nil {
+		return d.Metadata.Labels["idemeum_app_id"]
+	}
+	return ""
 }
 
 // Origin returns the origin value of the resource.
