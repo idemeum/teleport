@@ -3304,6 +3304,10 @@ type authProviderMock struct {
 	server types.ServerV2
 }
 
+func (mock authProviderMock) GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error) {
+	return &mock.server, nil
+}
+
 func (mock authProviderMock) GetNodes(ctx context.Context, n string) ([]types.Server, error) {
 	return []types.Server{&mock.server}, nil
 }

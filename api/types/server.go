@@ -93,6 +93,8 @@ type Server interface {
 
 	// DeepCopy creates a clone of this server value
 	DeepCopy() Server
+	// GetIdemeumAppId returns idemeum id label
+	GetIdemeumAppId() string
 }
 
 // NewServer creates an instance of Server.
@@ -234,6 +236,14 @@ func (s *ServerV2) GetHostname() string {
 // GetLabels returns server's static label key pairs
 func (s *ServerV2) GetLabels() map[string]string {
 	return s.Metadata.Labels
+}
+
+// GetIdemeumAppId returns the idemeum id.
+func (s *ServerV2) GetIdemeumAppId() string {
+	if s.Metadata.Labels != nil {
+		return s.Metadata.Labels["idemeum_app_id"]
+	}
+	return ""
 }
 
 // GetStaticLabels returns the server static labels.

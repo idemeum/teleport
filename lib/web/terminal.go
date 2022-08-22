@@ -82,6 +82,7 @@ type TerminalRequest struct {
 
 // AuthProvider is a subset of the full Auth API.
 type AuthProvider interface {
+	GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error)
 	GetNodes(ctx context.Context, namespace string) ([]types.Server, error)
 	GetSessionEvents(namespace string, sid session.ID, after int, includePrintEvents bool) ([]events.EventFields, error)
 	GetSessionTracker(ctx context.Context, sessionID string) (types.SessionTracker, error)
@@ -103,7 +104,7 @@ func NewTerminal(ctx context.Context, req TerminalRequest, authProvider AuthProv
 		return nil, trace.BadParameter("term: bad term dimensions")
 	}
 
-	servers, err := authProvider.GetNodes(ctx, req.Namespace)
+	entitledServer, err := authProvider.GetEntitledNode(ctx, req.Namespace, req.Server, req.Login)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -112,7 +113,7 @@ func NewTerminal(ctx context.Context, req TerminalRequest, authProvider AuthProv
 	//
 	// All proxies will support lookup by uuid, so host/port lookup
 	// and fallback can be dropped entirely.
-	hostName, hostPort, err := resolveServerHostPort(req.Server, servers)
+	hostName, hostPort, err := resolveServerHostPort(req.Server, []types.Server{entitledServer})
 	if err != nil {
 		return nil, trace.BadParameter("invalid server name %q: %v", req.Server, err)
 	}

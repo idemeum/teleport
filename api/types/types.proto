@@ -1789,6 +1789,10 @@ message CertExtension {
 // RoleConditions is a set of conditions that must all match to be allowed or
 // denied access.
 message RoleConditions {
+    // IdemeumEntitlements is a list of entitlements set by idemeum.
+    repeated string IdemeumEntitlements = 1000
+        [ (gogoproto.jsontag) = "idemeum_entitlements,omitempty" ];
+
     // Logins is a list of *nix system logins.
     repeated string Logins = 1 [ (gogoproto.jsontag) = "logins,omitempty" ];
 
@@ -3558,4 +3562,15 @@ message SortBy {
     bool IsDesc = 1 [ (gogoproto.jsontag) = "is_desc" ];
     // Field is the name of an objects field to sort by.
     string Field = 2 [ (gogoproto.jsontag) = "field" ];
+}
+
+// EntitlementLookupRequest is a request relating to a named resource in the given namespace with
+// entitlement for login, group attributes
+message EntitlementLookupRequest {
+    // Name is the name of the resource.
+    string Name = 1;
+    // Namespace is the namespace of resources.
+    string Namespace = 2;
+    // Login entitled.
+    string Login = 3;
 }

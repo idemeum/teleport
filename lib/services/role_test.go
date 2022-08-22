@@ -952,7 +952,7 @@ func TestCheckAccessToServer(t *testing.T) {
 				err := set.checkAccess(
 					check.server,
 					tc.mfaParams,
-					NewLoginMatcher(check.login))
+					NewLoginMatcher(check.server.GetIdemeumAppId(), check.login))
 				if check.hasAccess {
 					require.NoError(t, err, comment)
 				} else {
@@ -3939,7 +3939,7 @@ func TestCheckAccessToWindowsDesktop(t *testing.T) {
 			for i, check := range test.checks {
 				msg := fmt.Sprintf("check=%d, user=%v, server=%v, should_have_access=%v",
 					i, check.login, check.desktop.GetName(), check.hasAccess)
-				err := set.checkAccess(check.desktop, test.mfaParams, NewWindowsLoginMatcher(check.login))
+				err := set.checkAccess(check.desktop, test.mfaParams, NewWindowsLoginMatcher(check.desktop.GetIdemeumAppId(), check.login))
 				if check.hasAccess {
 					require.NoError(t, err, msg)
 				} else {
@@ -4032,7 +4032,7 @@ func BenchmarkCheckAccessToServer(b *testing.B) {
 				_ = set.checkAccess(
 					servers[i],
 					AccessMFAParams{},
-					NewLoginMatcher(login),
+					NewLoginMatcher(servers[i].GetIdemeumAppId(), login),
 				)
 			}
 		}

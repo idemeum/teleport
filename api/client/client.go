@@ -1902,6 +1902,19 @@ func (c *Client) GetNode(ctx context.Context, namespace, name string) (types.Ser
 	return resp, nil
 }
 
+// GetEntitledNode returns a node by name only if user is entitled to it with login name.
+func (c *Client) GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error) {
+	server, err := c.grpc.GetEntitledNode(ctx, &types.EntitlementLookupRequest{
+		Name:      name,
+		Namespace: namespace,
+		Login:     login,
+	}, c.callOpts...)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return server, nil
+}
+
 // GetNodes returns a complete list of nodes that the user has access to in the given namespace.
 func (c *Client) GetNodes(ctx context.Context, namespace string) ([]types.Server, error) {
 	resources, err := GetResourcesWithFilters(ctx, c, proto.ListResourcesRequest{

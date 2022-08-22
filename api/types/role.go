@@ -54,6 +54,11 @@ type Role interface {
 	// SetOptions sets role options
 	SetOptions(opt RoleOptions)
 
+	// GetIdemeumEntitlements Returns all idemeum set entitlement.
+	GetIdemeumEntitlements() []string
+	// SetIdemeumEntitlements Sets idemeum entitlements.
+	SetIdemeumEntitlements([]string)
+
 	// GetLogins gets *nix system logins for allow or deny condition.
 	GetLogins(RoleConditionType) []string
 	// SetLogins sets *nix system logins for allow or deny condition.
@@ -288,6 +293,16 @@ func (r *RoleV5) GetOptions() RoleOptions {
 // SetOptions sets role options.
 func (r *RoleV5) SetOptions(options RoleOptions) {
 	r.Spec.Options = options
+}
+
+// GetIdemeumEntitlements Returns all idemeum set entitlement.
+func (r *RoleV5) GetIdemeumEntitlements() []string {
+	return r.Spec.Allow.IdemeumEntitlements
+}
+
+// SetIdemeumEntitlements Sets idemeum entitlements.
+func (r *RoleV5) SetIdemeumEntitlements(entitlements []string) {
+	r.Spec.Allow.IdemeumEntitlements = utils.CopyStrings(entitlements)
 }
 
 // GetLogins gets system logins for allow or deny condition.

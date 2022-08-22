@@ -960,7 +960,7 @@ func (set RoleSet) EnumerateServerLogins(server types.Server) EnumerationResult 
 
 	// check each individual user against the server.
 	for _, user := range logins {
-		err := set.checkAccess(server, AccessMFAParams{Verified: true}, NewLoginMatcher(user))
+		err := set.checkAccess(server, AccessMFAParams{Verified: true}, NewLoginMatcher(server.GetIdemeumAppId(), user))
 		result.allowedDeniedMap[user] = err == nil
 	}
 
@@ -1829,45 +1829,56 @@ func (m *DatabaseNameMatcher) String() string {
 }
 
 type loginMatcher struct {
-	login string
+	login       string
+	entitlement string
 }
 
 // NewLoginMatcher creates a RoleMatcher that checks whether the role's logins
 // match the specified condition.
-func NewLoginMatcher(login string) RoleMatcher {
-	return &loginMatcher{login: login}
+func NewLoginMatcher(idemeumId string, login string) RoleMatcher {
+	if idemeumId == "" {
+		return &loginMatcher{login: login}
+	}
+	return &loginMatcher{login: login, entitlement: "u:" + idemeumId + ":" + login}
 }
 
 // Match matches a login against a role.
 func (l *loginMatcher) Match(role types.Role, typ types.RoleConditionType) (bool, error) {
-	logins := role.GetLogins(typ)
-	for _, login := range logins {
-		if l.login == login {
-			return true, nil
+	if l.entitlement == "" {
+		return matches(l.login, role.GetLogins(typ)), nil
+	}
+	return matches(l.login, role.GetLogins(typ)) && matches(l.entitlement, role.GetIdemeumEntitlements()), nil
+}
+
+func matches(target string, values []string) bool {
+	for _, value := range values {
+		if target == value {
+			return true
 		}
 	}
-	return false, nil
+	return false
 }
 
 type windowsLoginMatcher struct {
-	login string
+	login       string
+	entitlement string
 }
 
 // NewWindowsLoginMatcher creates a RoleMatcher that checks whether the role's
 // Windows desktop logins match the specified condition.
-func NewWindowsLoginMatcher(login string) RoleMatcher {
-	return &windowsLoginMatcher{login: login}
+func NewWindowsLoginMatcher(idemeumId string, login string) RoleMatcher {
+	if idemeumId == "" {
+		return &windowsLoginMatcher{login: login}
+	}
+	return &windowsLoginMatcher{login: login, entitlement: "u:" + idemeumId + ":" + login}
 }
 
 // Match matches a Windows Desktop login against a role.
 func (l *windowsLoginMatcher) Match(role types.Role, typ types.RoleConditionType) (bool, error) {
-	logins := role.GetWindowsLogins(typ)
-	for _, login := range logins {
-		if l.login == login {
-			return true, nil
-		}
+	if l.entitlement == "" {
+		return matches(l.login, role.GetWindowsLogins(typ)), nil
 	}
-	return false, nil
+	return matches(l.login, role.GetWindowsLogins(typ)) && matches(l.entitlement, role.GetIdemeumEntitlements()), nil
 }
 
 type kubernetesClusterLabelMatcher struct {
@@ -1928,6 +1939,10 @@ func (set RoleSet) checkAccess(r AccessCheckable, mfa AccessMFAParams, matchers 
 	// by the backend) can slow down this function by 50x for large clusters!
 	isDebugEnabled, debugf := rbacDebugLogger()
 
+	debugf("IDEMEUM [AccessCheckable: %v, AccessMFAParams: %v]", r, mfa)
+	for _, matcher := range matchers {
+		debugf("IDEMEUM [Matcher: %v]", matcher)
+	}
 	if mfa.AlwaysRequired && !mfa.Verified {
 		debugf("Access to %v %q denied, cluster requires per-session MFA", r.GetKind(), r.GetName())
 		return ErrSessionMFARequired

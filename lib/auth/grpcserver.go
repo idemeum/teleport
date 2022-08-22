@@ -2937,6 +2937,32 @@ func (g *GRPCServer) GetNode(ctx context.Context, req *types.ResourceInNamespace
 	return serverV2, nil
 }
 
+// GetEntitledNode returns a node by name only if user is entitled to it with login name.
+func (g *GRPCServer) GetEntitledNode(ctx context.Context, req *types.EntitlementLookupRequest) (*types.ServerV2, error) {
+	if req.Namespace == "" {
+		return nil, trace.BadParameter("missing parameter namespace")
+	}
+	if req.Name == "" {
+		return nil, trace.BadParameter("missing parameter name")
+	}
+	if req.Login == "" {
+		return nil, trace.BadParameter("missing parameter login")
+	}
+	auth, err := g.authenticate(ctx)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	node, err := auth.ServerWithRoles.GetEntitledNode(ctx, req.Namespace, req.Name, req.Login)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	serverV2, ok := node.(*types.ServerV2)
+	if !ok {
+		return nil, trace.Errorf("encountered unexpected node type: %T", node)
+	}
+	return serverV2, nil
+}
+
 // UpsertNode upserts a node.
 func (g *GRPCServer) UpsertNode(ctx context.Context, node *types.ServerV2) (*types.KeepAlive, error) {
 	auth, err := g.authenticate(ctx)
