@@ -2866,6 +2866,11 @@ func (a *Server) GetNodes(ctx context.Context, namespace string) ([]types.Server
 	return a.GetCache().GetNodes(ctx, namespace)
 }
 
+// GetEntitledNode returns a node by name only if user is entitled to it with login name.
+func (a *Server) GetEntitledNode(ctx context.Context, namespace, name string, login string) (types.Server, error) {
+	return a.GetEntitledNode(ctx, namespace, name, login)
+}
+
 // ErrDone indicates that resource iteration is complete
 var ErrDone = errors.New("done iterating")
 

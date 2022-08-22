@@ -1023,7 +1023,7 @@ func (a *ServerWithRoles) GetNode(ctx context.Context, namespace, name string) (
 		return nil, trace.Wrap(err)
 	}
 
-	checker, err := newNodeChecker(a.context, a.authServer)
+	checker, err := newNodeChecker(a.context, a.authServer, "")
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -1051,7 +1051,7 @@ func (a *ServerWithRoles) GetNodes(ctx context.Context, namespace string) ([]typ
 	}
 	elapsedFetch := time.Since(startFetch)
 
-	checker, err := newNodeChecker(a.context, a.authServer)
+	checker, err := newNodeChecker(a.context, a.authServer, "")
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -1073,6 +1073,26 @@ func (a *ServerWithRoles) GetNodes(ctx context.Context, namespace string) ([]typ
 		len(nodes), len(filteredNodes), elapsedFetch+elapsedFilter)
 
 	return filteredNodes, nil
+}
+
+func (a *ServerWithRoles) GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error) {
+	log.Debugf("IDEMEUM Checking entitlements [%v/%v]", name, login)
+	node, err := a.authServer.GetNode(ctx, namespace, name)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	checker, err := newNodeChecker(a.context, a.authServer, login)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	access_err := checker.CanAccess(node)
+	if access_err != nil {
+		return nil, trace.Wrap(err)
+	}
+	log.Debugf("IDEMEUM Found entitled node - %s", node.GetName())
+	return node, nil
 }
 
 // ListResources returns a paginated list of resources filtered by user access.
@@ -1231,12 +1251,13 @@ func (r resourceChecker) CanAccess(resource types.Resource) error {
 type nodeChecker struct {
 	accessChecker services.AccessChecker
 	builtinRole   bool
+	login         string
 }
 
 // newNodeChecker returns a new nodeChecker that checks access to nodes with the
 // the provided user if necessary. This prevents the need to load the role set each time
 // a node is checked.
-func newNodeChecker(authContext Context, authServer *Server) (*nodeChecker, error) {
+func newNodeChecker(authContext Context, authServer *Server, login string) (*nodeChecker, error) {
 	// For certain built-in roles, continue to allow full access and return
 	// the full set of nodes to not break existing clusters during migration.
 	//
@@ -1250,6 +1271,7 @@ func newNodeChecker(authContext Context, authServer *Server) (*nodeChecker, erro
 	return &nodeChecker{
 		accessChecker: authContext.Checker,
 		builtinRole:   builtinRole,
+		login:         login,
 	}, nil
 }
 
@@ -1266,6 +1288,11 @@ func (n *nodeChecker) CanAccess(resource types.Resource) error {
 
 	// Check if we can access the node with any of our possible logins.
 	for _, login := range n.accessChecker.GetAllLogins() {
+		if n.login != "" && n.login != login {
+			log.Debugf("IDEMEUM : Skipping Login Check : %v", login)
+			continue
+		}
+		log.Debugf("IDEMEUM : Performing Login Check : %v / %v", server.GetIdemeumAppId(), login)
 		err := n.accessChecker.CheckAccess(server, services.AccessMFAParams{Verified: true}, services.NewLoginMatcher(server.GetIdemeumAppId(), login))
 		if err == nil {
 			return nil
@@ -1347,7 +1374,7 @@ func (a *ServerWithRoles) newResourceAccessChecker(resource string) (resourceAcc
 	case types.KindAppServer, types.KindDatabaseServer, types.KindWindowsDesktop:
 		return &resourceChecker{AccessChecker: a.context.Checker}, nil
 	case types.KindNode:
-		return newNodeChecker(a.context, a.authServer)
+		return newNodeChecker(a.context, a.authServer, "")
 	case types.KindKubeService:
 		return newKubeChecker(a.context), nil
 	default:

@@ -1170,6 +1170,11 @@ func (c *Client) SearchSessionEvents(fromUTC, toUTC time.Time, limit int, order 
 	return events, lastKey, nil
 }
 
+// GetEntitledNode returns a node by name only if user is entitled to it with login name.
+func (c *Client) GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error) {
+	return nil, nil
+}
+
 // GetNamespaces returns a list of namespaces
 func (c *Client) GetNamespaces() ([]types.Namespace, error) {
 	out, err := c.Get(context.TODO(), c.Endpoint("namespaces"), url.Values{})
@@ -1792,4 +1797,7 @@ type ClientI interface {
 
 	// PingInventory attempts to trigger a downstream ping against a connected instance.
 	PingInventory(ctx context.Context, req proto.InventoryPingRequest) (proto.InventoryPingResponse, error)
+
+	// GetEntitledNode returns a node by name only if user is entitled to it with login name.
+	GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error)
 }
