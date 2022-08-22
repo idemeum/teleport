@@ -1172,7 +1172,11 @@ func (c *Client) SearchSessionEvents(fromUTC, toUTC time.Time, limit int, order 
 
 // GetEntitledNode returns a node by name only if user is entitled to it with login name.
 func (c *Client) GetEntitledNode(ctx context.Context, namespace string, name string, login string) (types.Server, error) {
-	return nil, nil
+	node, err := c.APIClient.GetEntitledNode(ctx, namespace, name, login)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+	return node, nil
 }
 
 // GetNamespaces returns a list of namespaces
