@@ -5,7 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
-	"github.com/google/uuid"
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
 )
@@ -49,9 +48,8 @@ func (s *sqsAppPublisherService) Publish(event AppChangeEvent) error {
 
 	log.Infof("Publishing the message for app type: %v", event.AppType)
 	_, err = s.sqsService.SendMessage(&sqs.SendMessageInput{
-		MessageDeduplicationId: aws.String(uuid.New().String()),
-		MessageBody:            aws.String(string(messageJsonData)),
-		QueueUrl:               queueUrlOutput.QueueUrl,
+		MessageBody: aws.String(string(messageJsonData)),
+		QueueUrl:    queueUrlOutput.QueueUrl,
 	})
 
 	if err != nil {
