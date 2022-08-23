@@ -26,7 +26,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/gravitational/teleport/lib/publisher"
 	"io"
 	"io/fs"
 	"net"
@@ -42,6 +41,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client"
@@ -1460,8 +1461,10 @@ func (process *TeleportProcess) initAuthService() error {
 		}
 	}
 
+	//Added audit publisher
+	auditPublisher := publisher.NewAuditPublisher(cfg.Auth.AuditPublisherConfig)
 	checkingEmitter, err := events.NewCheckingEmitter(events.CheckingEmitterConfig{
-		Inner:       events.NewMultiEmitter(events.NewLoggingEmitter(), emitter),
+		Inner:       events.NewMultiEmitter(events.NewLoggingEmitter(), emitter, auditPublisher),
 		Clock:       process.Clock,
 		ClusterName: cfg.Auth.ClusterName.GetClusterName(),
 	})
