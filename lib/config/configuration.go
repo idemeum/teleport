@@ -648,6 +648,10 @@ func applyAuthConfig(fc *FileConfig, cfg *service.Config) error {
 	if err := applyAppPublisherConfig(fc, cfg); err != nil {
 		return trace.Wrap(err)
 	}
+
+	if err := applyAuditPublisherConfig(fc, cfg); err != nil {
+		return trace.Wrap(err)
+	}
 	return nil
 }
 
@@ -713,6 +717,26 @@ func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 	}
 
 	cfg.Auth.AppPublisherConfig.SQSQueueName = fc.Auth.AppPublisherConfig.SQSQueueName
+	return nil
+}
+
+func applyAuditPublisherConfig(fc *FileConfig, cfg *service.Config) error {
+	if fc.Auth.AuditPublisherConfig == nil {
+		cfg.Auth.AuditPublisherConfig.SQSQueueName = ""
+		return nil
+	}
+
+	enabled, _ := apiutils.ParseBool(fc.Auth.AuditPublisherConfig.Enabled)
+	cfg.Auth.AuditPublisherConfig.Enabled = enabled
+	cfg.Auth.AuditPublisherConfig.SQSQueueName = fc.Auth.AuditPublisherConfig.SQSQueueName
+	if len(fc.Auth.AuditPublisherConfig.EventTypes) > 0 {
+		eventByTypes := make(map[string]string)
+		for _, eventType := range fc.Auth.AuditPublisherConfig.EventTypes {
+			eventByTypes[eventType] = eventType
+		}
+		cfg.Auth.AuditPublisherConfig.EventByTypes = eventByTypes
+	}
+
 	return nil
 }
 

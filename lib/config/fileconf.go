@@ -716,10 +716,19 @@ type Auth struct {
 	TunnelStrategy *types.TunnelStrategyV1 `yaml:"tunnel_strategy,omitempty"`
 
 	AppPublisherConfig *AppPublisherConfig `yaml:"app_publisher_config,omitempty"`
+
+	AuditPublisherConfig *AuditPublisherConfig `yaml:"audit_publisher_config,omitempty"`
 }
 
 type AppPublisherConfig struct {
 	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
+}
+
+type AuditPublisherConfig struct {
+	Enabled      string `yaml:"enabled,omitempty"`
+	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
+	// EventTypes audit event types are published using this publisher.
+	EventTypes apiutils.Strings `yaml:"event_types,omitempty"`
 }
 
 // CAKeyParams configures how CA private keys will be created and stored.
