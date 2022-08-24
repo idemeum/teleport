@@ -170,11 +170,13 @@ func (h *Handler) createAppSession(w http.ResponseWriter, r *http.Request, p htt
 	//
 	// PublicAddr and ClusterName will get encoded within the certificate and
 	// used for request routing.
+
 	ws, err := authClient.CreateAppSession(r.Context(), types.CreateAppSessionRequest{
-		Username:    ctx.GetUser(),
-		PublicAddr:  result.App.GetPublicAddr(),
-		ClusterName: result.ClusterName,
-		AWSRoleARN:  req.AWSRole,
+		Username:        ctx.GetUser(),
+		PublicAddr:      result.App.GetPublicAddr(),
+		ClusterName:     result.ClusterName,
+		AWSRoleARN:      req.AWSRole,
+		IDPSessionIndex: ctx.GetIDPSessionIndex(),
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -193,6 +195,7 @@ func (h *Handler) createAppSession(w http.ResponseWriter, r *http.Request, p htt
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
 	identity, err := tlsca.FromSubject(certificate.Subject, certificate.NotAfter)
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -215,20 +218,26 @@ func (h *Handler) createAppSession(w http.ResponseWriter, r *http.Request, p htt
 			ServerNamespace: apidefaults.Namespace,
 		},
 		SessionMetadata: apievents.SessionMetadata{
-			SessionID: identity.RouteToApp.SessionID,
-			WithMFA:   identity.MFAVerified,
+			SessionID:       identity.RouteToApp.SessionID,
+			WithMFA:         identity.MFAVerified,
+			IDPSessionIndex: ws.GetIDPSessionIndex(),
 		},
 		UserMetadata: userMetadata,
 		ConnectionMetadata: apievents.ConnectionMetadata{
 			RemoteAddr: r.RemoteAddr,
+		},
+		ClientMetadata: apievents.ClientMetadata{
+			UserAgent: r.UserAgent(),
 		},
 		PublicAddr: identity.RouteToApp.PublicAddr,
 		AppMetadata: apievents.AppMetadata{
 			AppURI:        result.App.GetURI(),
 			AppPublicAddr: result.App.GetPublicAddr(),
 			AppName:       result.App.GetName(),
+			AppLabels:     result.App.GetAllLabels(),
 		},
 	}
+
 	if err := h.cfg.Emitter.EmitAuditEvent(h.cfg.Context, appSessionStartEvent); err != nil {
 		return nil, trace.Wrap(err)
 	}

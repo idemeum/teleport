@@ -1858,6 +1858,7 @@ func (a *Server) registerWebauthnDevice(ctx context.Context, regResp *proto.MFAR
 // If there is a switchback request, the roles will switchback to user's default roles and
 // the expiration time is derived from users recently logged in time.
 func (a *Server) ExtendWebSession(ctx context.Context, req WebSessionReq, identity tlsca.Identity) (types.WebSession, error) {
+	log.Debugf("IDEMEUM Extensind web session - %v", req.PrevSessionID)
 	prevSession, err := a.GetWebSession(ctx, types.GetWebSessionRequest{
 		User:      req.User,
 		SessionID: req.PrevSessionID,
@@ -1943,6 +1944,7 @@ func (a *Server) ExtendWebSession(ctx context.Context, req WebSessionReq, identi
 		SessionTTL:           sessionTTL,
 		AccessRequests:       accessRequests,
 		RequestedResourceIDs: allowedResourceIDs,
+		IDPSessionIndex:      prevSession.GetIDPSessionIndex(),
 	})
 	if err != nil {
 		return nil, trace.Wrap(err)
@@ -2517,6 +2519,7 @@ func (a *Server) NewWebSession(req types.NewWebSessionRequest) (types.WebSession
 		BearerTokenExpires: startTime.UTC().Add(bearerTokenTTL),
 		LoginTime:          req.LoginTime,
 		IdleTimeout:        types.Duration(netCfg.GetWebIdleTimeout()),
+		IDPSessionIndex:    req.IDPSessionIndex,
 	}
 	UserLoginCount.Inc()
 

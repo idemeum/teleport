@@ -2459,6 +2459,8 @@ message WebSessionSpecV2 {
     // IdleTimeout is the max time a user can be inactive in a session.
     int64 IdleTimeout = 9
         [ (gogoproto.jsontag) = "idle_timeout", (gogoproto.casttype) = "Duration" ];
+    // IDPSessionIndex SAML idp session index
+    string IDPSessionIndex = 10 [ (gogoproto.jsontag) = "idp_session_index,omitempty" ];
 }
 
 // WebSessionFilter encodes cache watch parameters for filtering web sessions.

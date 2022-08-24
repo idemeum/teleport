@@ -683,6 +683,8 @@ message CreateAppSessionRequest {
     string ClusterName = 4 [ (gogoproto.jsontag) = "cluster_name" ];
     // AWSRoleARN is AWS role the user wants to assume.
     string AWSRoleARN = 5 [ (gogoproto.jsontag) = "aws_role_arn" ];
+    // IDPSessionIndex is SAML assertion session index
+    string IDPSessionIndex = 6 [ (gogoproto.jsontag) = "idp_session_index,omitempty" ];
 }
 
 // CreateAppSessionResponse contains the requested application web session.
