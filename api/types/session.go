@@ -61,6 +61,10 @@ type WebSession interface {
 	GetUser() string
 	// SetUser sets user associated with this session
 	SetUser(string)
+	// GetIDPSessionIndex returns SAML IDP session index
+	GetIDPSessionIndex() string
+	// SetIDPSessionIndex sets SAML IDP session index
+	SetIDPSessionIndex(string)
 	// GetPub is returns public certificate signed by auth server
 	GetPub() []byte
 	// GetPriv returns private OpenSSH key used to auth with SSH nodes
@@ -207,6 +211,16 @@ func (ws *WebSessionV2) GetUser() string {
 	return ws.Spec.User
 }
 
+// SetUser sets user associated with this session
+func (ws *WebSessionV2) SetIDPSessionIndex(v string) {
+	ws.Spec.IDPSessionIndex = v
+}
+
+// GetUser returns the user this session is associated with
+func (ws *WebSessionV2) GetIDPSessionIndex() string {
+	return ws.Spec.IDPSessionIndex
+}
+
 // GetShortName returns visible short name used in logging
 func (ws *WebSessionV2) GetShortName() string {
 	if len(ws.Metadata.Name) < 4 {
@@ -307,6 +321,8 @@ type CreateAppSessionRequest struct {
 	ClusterName string `json:"cluster_name"`
 	// AWSRoleARN is AWS role this the user wants to assume.
 	AWSRoleARN string `json:"aws_role_arn"`
+	// IDPSessionIndex SAML idp session index
+	IDPSessionIndex string `json:"idp_session_index"`
 }
 
 // Check validates the request.
@@ -546,6 +562,8 @@ type NewWebSessionRequest struct {
 	AccessRequests []string
 	// RequestedResourceIDs optionally lists requested resources
 	RequestedResourceIDs []ResourceID
+	// IDPSessionIndex SAML idp session index
+	IDPSessionIndex string
 }
 
 // Check validates the request.
