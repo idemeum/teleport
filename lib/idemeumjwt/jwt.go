@@ -5,27 +5,29 @@ import (
 	"crypto/ecdsa"
 	"crypto/subtle"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/gravitational/trace"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/json"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"time"
 )
 
 type IdemeumClaims struct {
-	Audience   string   `json:"aud,omitempty"`
-	ExpiresAt  int64    `json:"exp,omitempty"`
-	Id         string   `json:"jti,omitempty"`
-	IssuedAt   int64    `json:"iat,omitempty"`
-	Issuer     string   `json:"iss,omitempty"`
-	NotBefore  int64    `json:"nbf,omitempty"`
-	Subject    string   `json:"sub,omitempty"`
-	Roles      []string `json:"roles,omitempty"`
-	SessionTTL int64    `json:"sessionTTL,omitempty"`
+	Audience   string              `json:"aud,omitempty"`
+	ExpiresAt  int64               `json:"exp,omitempty"`
+	Id         string              `json:"jti,omitempty"`
+	IssuedAt   int64               `json:"iat,omitempty"`
+	Issuer     string              `json:"iss,omitempty"`
+	NotBefore  int64               `json:"nbf,omitempty"`
+	Subject    string              `json:"sub,omitempty"`
+	Roles      []string            `json:"roles,omitempty"`
+	Traits     map[string][]string `json:"traits,omitempty"`
+	SessionTTL int64               `json:"sessionTTL,omitempty"`
 }
 
 func ValidateJwtToken(ServiceToken string, TenantUrl string) (*IdemeumClaims, error) {
