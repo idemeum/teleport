@@ -1847,7 +1847,7 @@ func (l *loginMatcher) Match(role types.Role, typ types.RoleConditionType) (bool
 	if l.entitlement == "" {
 		return matches(l.login, role.GetLogins(typ)), nil
 	}
-	return matches(l.login, role.GetLogins(typ)) && matches(l.entitlement, role.GetIdemeumEntitlements()), nil
+	return matches(l.login, role.GetLogins(typ)) && (matches(l.entitlement, role.GetIdemeumEntitlements()) || matches(types.Wildcard, role.GetIdemeumEntitlements())), nil
 }
 
 func matches(target string, values []string) bool {
@@ -1878,7 +1878,7 @@ func (l *windowsLoginMatcher) Match(role types.Role, typ types.RoleConditionType
 	if l.entitlement == "" {
 		return matches(l.login, role.GetWindowsLogins(typ)), nil
 	}
-	return matches(l.login, role.GetWindowsLogins(typ)) && matches(l.entitlement, role.GetIdemeumEntitlements()), nil
+	return matches(l.login, role.GetWindowsLogins(typ)) && (matches(l.entitlement, role.GetIdemeumEntitlements()) || matches(types.Wildcard, role.GetIdemeumEntitlements())), nil
 }
 
 type kubernetesClusterLabelMatcher struct {
