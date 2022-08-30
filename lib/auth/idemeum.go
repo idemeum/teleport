@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-	"github.com/gravitational/teleport/lib/idemeumjwt"
 	"time"
+
+	"github.com/gravitational/teleport/lib/idemeumjwt"
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
@@ -66,8 +67,13 @@ func validateIdemeumToken(ServiceToken string, TenantUrl string) (*createUserPar
 	}
 
 	roles := claims.Roles
-	if len(claims.Roles) == 0 {
+	if len(roles) == 0 {
 		roles = []string{"editor", "access", "auditor"}
+	}
+
+	traits := claims.Traits
+	if traits == nil {
+		traits = map[string][]string{}
 	}
 
 	var sessionTTL time.Duration
@@ -83,6 +89,7 @@ func validateIdemeumToken(ServiceToken string, TenantUrl string) (*createUserPar
 		connectorName: constants.Idemeum,
 		username:      userName,
 		roles:         roles,
+		traits:        traits,
 		sessionTTL:    utils.MinTTL(sessionTTL, apidefaults.MaxCertDuration),
 	}
 	return &p, nil
