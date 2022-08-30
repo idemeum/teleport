@@ -62,7 +62,7 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	// configure logger for a typical CLI scenario until configuration file is
 	// parsed
 	utils.InitLogger(utils.LoggingForDaemon, log.ErrorLevel)
-	app = utils.InitCLIParser("teleport", "Teleport Access Plane. Learn more at https://goteleport.com")
+	app = utils.InitCLIParser("teleport", "idemeum Access Plane. Learn more at https://idemeum.com")
 
 	// define global flags:
 	var (
@@ -76,15 +76,15 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	)
 
 	// define commands:
-	start := app.Command("start", "Starts the Teleport service.")
+	start := app.Command("start", "Starts the idemeum service.")
 	status := app.Command("status", "Print the status of the current SSH session.")
 	dump := app.Command("configure", "Generate a simple config file to get started.")
-	ver := app.Command("version", "Print the version of your teleport binary.")
+	ver := app.Command("version", "Print the version of your idemeum binary.")
 	scpc := app.Command("scp", "Server-side implementation of SCP.").Hidden()
-	exec := app.Command(teleport.ExecSubCommand, "Used internally by Teleport to re-exec itself to run a command.").Hidden()
-	forward := app.Command(teleport.ForwardSubCommand, "Used internally by Teleport to re-exec itself to port forward.").Hidden()
-	checkHomeDir := app.Command(teleport.CheckHomeDirSubCommand, "Used internally by Teleport to re-exec itself to check access to a directory.").Hidden()
-	park := app.Command(teleport.ParkSubCommand, "Used internally by Teleport to re-exec itself to do nothing.").Hidden()
+	exec := app.Command(teleport.ExecSubCommand, "Used internally by idemeum to re-exec itself to run a command.").Hidden()
+	forward := app.Command(teleport.ForwardSubCommand, "Used internally by idemeum to re-exec itself to port forward.").Hidden()
+	checkHomeDir := app.Command(teleport.CheckHomeDirSubCommand, "Used internally by idemeum to re-exec itself to check access to a directory.").Hidden()
+	park := app.Command(teleport.ParkSubCommand, "Used internally by idemeum to re-exec itself to do nothing.").Hidden()
 	app.HelpFlag.Short('h')
 
 	// define start flags:
@@ -130,11 +130,11 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	start.Flag("diag-addr",
 		"Start diagnostic prometheus and healthz endpoint.").StringVar(&ccf.DiagnosticAddr)
 	start.Flag("permit-user-env",
-		"Enables reading of ~/.tsh/environment when creating a session").BoolVar(&ccf.PermitUserEnvironment)
+		"Enables reading of ~/.ish/environment when creating a session").BoolVar(&ccf.PermitUserEnvironment)
 	start.Flag("insecure",
 		"Insecure mode disables certificate validation").BoolVar(&ccf.InsecureMode)
 	start.Flag("fips",
-		"Start Teleport in FedRAMP/FIPS 140-2 mode.").
+		"Start idemeum in FedRAMP/FIPS 140-2 mode.").
 		Default("false").
 		BoolVar(&ccf.FIPS)
 	start.Flag("skip-version-check",
@@ -184,7 +184,7 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	appStartCmd.Flag("config", fmt.Sprintf("Path to a configuration file [%v].", defaults.ConfigFilePath)).Short('c').ExistingFileVar(&ccf.ConfigFile)
 	appStartCmd.Flag("config-string", "Base64 encoded configuration string.").Hidden().Envar(defaults.ConfigEnvar).StringVar(&ccf.ConfigString)
 	appStartCmd.Flag("labels", "Comma-separated list of labels for this node, for example env=dev,app=web.").StringVar(&ccf.Labels)
-	appStartCmd.Flag("fips", "Start Teleport in FedRAMP/FIPS 140-2 mode.").Default("false").BoolVar(&ccf.FIPS)
+	appStartCmd.Flag("fips", "Start idemeum in FedRAMP/FIPS 140-2 mode.").Default("false").BoolVar(&ccf.FIPS)
 	appStartCmd.Flag("name", "Name of the application to start.").StringVar(&ccf.AppName)
 	appStartCmd.Flag("uri", "Internal address of the application to proxy.").StringVar(&ccf.AppURI)
 	appStartCmd.Flag("public-addr", "Public address of the application to proxy.").StringVar(&ccf.AppPublicAddr)
@@ -204,7 +204,7 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	dbStartCmd.Flag("config", fmt.Sprintf("Path to a configuration file [%v].", defaults.ConfigFilePath)).Short('c').ExistingFileVar(&ccf.ConfigFile)
 	dbStartCmd.Flag("config-string", "Base64 encoded configuration string.").Hidden().Envar(defaults.ConfigEnvar).StringVar(&ccf.ConfigString)
 	dbStartCmd.Flag("labels", "Comma-separated list of labels for this node, for example env=dev,app=web.").StringVar(&ccf.Labels)
-	dbStartCmd.Flag("fips", "Start Teleport in FedRAMP/FIPS 140-2 mode.").Default("false").BoolVar(&ccf.FIPS)
+	dbStartCmd.Flag("fips", "Start idemeum in FedRAMP/FIPS 140-2 mode.").Default("false").BoolVar(&ccf.FIPS)
 	dbStartCmd.Flag("name", "Name of the proxied database.").StringVar(&ccf.DatabaseName)
 	dbStartCmd.Flag("description", "Description of the proxied database.").StringVar(&ccf.DatabaseDescription)
 	dbStartCmd.Flag("protocol", fmt.Sprintf("Proxied database protocol. Supported are: %v.", defaults.DatabaseProtocols)).StringVar(&ccf.DatabaseProtocol)
@@ -227,7 +227,7 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 
 	dbConfigure := dbCmd.Command("configure", "Bootstraps database service configuration and cloud permissions.")
 	dbConfigureCreate := dbConfigure.Command("create", "Creates a sample Database Service configuration.")
-	dbConfigureCreate.Flag("proxy", fmt.Sprintf("Teleport proxy address to connect to [%s].", defaults.ProxyWebListenAddr().Addr)).
+	dbConfigureCreate.Flag("proxy", fmt.Sprintf("idemeum proxy address to connect to [%s].", defaults.ProxyWebListenAddr().Addr)).
 		Default(defaults.ProxyWebListenAddr().Addr).
 		StringsVar(&dbConfigCreateFlags.AuthServersAddr)
 	dbConfigureCreate.Flag("token", "Invitation token to register with an auth server [none].").Default("/tmp/token").StringVar(&dbConfigCreateFlags.AuthToken)
@@ -248,7 +248,7 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	dbConfigureBootstrap := dbConfigure.Command("bootstrap", "Bootstrap the necessary configuration for the database agent. It reads the provided agent configuration to determine what will be bootstrapped.")
 	dbConfigureBootstrap.Flag("config", fmt.Sprintf("Path to a configuration file [%v].", defaults.ConfigFilePath)).Short('c').ExistingFileVar(&configureDatabaseBootstrapFlags.config.ConfigPath)
 	dbConfigureBootstrap.Flag("manual", "When executed in \"manual\" mode, it will print the instructions to complete the configuration instead of applying them directly.").BoolVar(&configureDatabaseBootstrapFlags.config.Manual)
-	dbConfigureBootstrap.Flag("policy-name", fmt.Sprintf("Name of the Teleport Database agent policy. Default: %q", dbconfigurators.DefaultPolicyName)).Default(dbconfigurators.DefaultPolicyName).StringVar(&configureDatabaseBootstrapFlags.config.PolicyName)
+	dbConfigureBootstrap.Flag("policy-name", fmt.Sprintf("Name of the idemeum Database agent policy. Default: %q", dbconfigurators.DefaultPolicyName)).Default(dbconfigurators.DefaultPolicyName).StringVar(&configureDatabaseBootstrapFlags.config.PolicyName)
 	dbConfigureBootstrap.Flag("confirm", "Do not prompt user and auto-confirm all actions.").BoolVar(&configureDatabaseBootstrapFlags.confirm)
 	dbConfigureBootstrap.Flag("attach-to-role", "Role name to attach policy to. Mutually exclusive with --attach-to-user. If none of the attach-to flags is provided, the command will try to attach the policy to the current user/role based on the credentials.").StringVar(&configureDatabaseBootstrapFlags.config.AttachToRole)
 	dbConfigureBootstrap.Flag("attach-to-user", "User name to attach policy to. Mutually exclusive with --attach-to-role. If none of the attach-to flags is provided, the command will try to attach the policy to the current user/role based on the credentials.").StringVar(&configureDatabaseBootstrapFlags.config.AttachToUser)
@@ -297,11 +297,11 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	dump.Flag("acme-email",
 		"Email to receive updates from Letsencrypt.org.").StringVar(&dumpFlags.ACMEEmail)
 	dump.Flag("test", "Path to a configuration file to test.").ExistingFileVar(&dumpFlags.testConfigFile)
-	dump.Flag("version", "Teleport configuration version.").Default(defaults.TeleportConfigVersionV2).StringVar(&dumpFlags.Version)
+	dump.Flag("version", "idemeum configuration version.").Default(defaults.TeleportConfigVersionV2).StringVar(&dumpFlags.Version)
 	dump.Flag("public-addr", "The hostport that the proxy advertises for the HTTP endpoint.").StringVar(&dumpFlags.PublicAddr)
 	dump.Flag("cert-file", "Path to a TLS certificate file for the proxy.").ExistingFileVar(&dumpFlags.CertFile)
 	dump.Flag("key-file", "Path to a TLS key file for the proxy.").ExistingFileVar(&dumpFlags.KeyFile)
-	dump.Flag("data-dir", "Path to a directory where Teleport keep its data.").Default(defaults.DataDir).StringVar(&dumpFlags.DataDir)
+	dump.Flag("data-dir", "Path to a directory where idemeum keep its data.").Default(defaults.DataDir).StringVar(&dumpFlags.DataDir)
 	dump.Flag("token", "Invitation token to register with an auth server.").StringVar(&dumpFlags.AuthToken)
 	dump.Flag("roles", "Comma-separated list of roles to create config with.").StringVar(&dumpFlags.Roles)
 	dump.Flag("auth-server", "Address of the auth server.").StringVar(&dumpFlags.AuthServer)
@@ -316,9 +316,9 @@ func Run(options Options) (app *kingpin.Application, executedCommand string, con
 	dumpNodeConfigure.Flag("output",
 		"Write to stdout with -o=stdout, default config file with -o=file or custom path with -o=file:///path").Short('o').Default(
 		teleport.SchemeStdout).StringVar(&dumpFlags.output)
-	dumpNodeConfigure.Flag("version", "Teleport configuration version.").Default(defaults.TeleportConfigVersionV2).StringVar(&dumpFlags.Version)
+	dumpNodeConfigure.Flag("version", "idemeum configuration version.").Default(defaults.TeleportConfigVersionV2).StringVar(&dumpFlags.Version)
 	dumpNodeConfigure.Flag("public-addr", "The hostport that the node advertises for the SSH endpoint.").StringVar(&dumpFlags.PublicAddr)
-	dumpNodeConfigure.Flag("data-dir", "Path to a directory where Teleport keep its data.").Default(defaults.DataDir).StringVar(&dumpFlags.DataDir)
+	dumpNodeConfigure.Flag("data-dir", "Path to a directory where idemeum keep its data.").Default(defaults.DataDir).StringVar(&dumpFlags.DataDir)
 	dumpNodeConfigure.Flag("token", "Invitation token to register with an auth server.").StringVar(&dumpFlags.AuthToken)
 	dumpNodeConfigure.Flag("auth-server", "Address of the auth server.").StringVar(&dumpFlags.AuthServer)
 	dumpNodeConfigure.Flag("labels", "Comma-separated list of labels to add to newly created nodes ex) env=staging,cloud=aws.").StringVar(&dumpFlags.NodeLabels)
@@ -411,7 +411,7 @@ func onStatus() error {
 	sid := os.Getenv(teleport.SSHSessionID)
 
 	if sid == "" || proxyHost == "" {
-		fmt.Println("You are not inside of a Teleport SSH session")
+		fmt.Println("You are not inside of a idemeum SSH session")
 		return nil
 	}
 
@@ -461,7 +461,7 @@ func checkConfigurationFileVersion(version string) error {
 	case defaults.TeleportConfigVersionV1, defaults.TeleportConfigVersionV2, "":
 	default:
 		return trace.BadParameter(
-			"unsupported Teleport configuration version %q, supported are: %s",
+			"unsupported idemeum configuration version %q, supported are: %s",
 			version, strings.Join(supportedVersions, ","))
 	}
 
@@ -537,9 +537,9 @@ func onConfigDump(flags dumpFlags) error {
 
 	if configPath != "" {
 		if modules.GetModules().BuildType() == modules.BuildOSS {
-			fmt.Printf("Wrote config to file %q. Now you can start the server. Happy Teleporting!\n", configPath)
+			fmt.Printf("Wrote config to file %q. Now you can start the server.\n", configPath)
 		} else {
-			fmt.Printf("Wrote config to file %q. Add your license file to %v and start the server. Happy Teleporting!\n", configPath, flags.LicensePath)
+			fmt.Printf("Wrote config to file %q. Add your license file to %v and start the server.\n", configPath, flags.LicensePath)
 		}
 	}
 
@@ -603,7 +603,7 @@ func onSCP(scpFlags *scp.Flags) (err error) {
 	// they're automatically replayed by the scp client)
 	utils.SwitchLoggingtoSyslog()
 	if len(scpFlags.Target) == 0 {
-		return trace.BadParameter("teleport scp: missing an argument")
+		return trace.BadParameter("idemeum scp: missing an argument")
 	}
 
 	// get user's home dir (it serves as a default destination)
