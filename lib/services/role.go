@@ -323,6 +323,11 @@ func ApplyTraits(r types.Role, traits map[string][]string) types.Role {
 		outDbUsers := applyValueTraitsSlice(inDbUsers, traits, "database user")
 		r.SetDatabaseUsers(condition, apiutils.Deduplicate(outDbUsers))
 
+		// apply templates to idemeum entitlements
+		inEntitlements := r.GetIdemeumEntitlements()
+		outEntitlements := applyValueTraitsSlice(inEntitlements, traits, "idemeum_entitlements")
+		r.SetIdemeumEntitlements(apiutils.Deduplicate(outEntitlements))
+
 		// apply templates to node labels
 		inLabels := r.GetNodeLabels(condition)
 		if inLabels != nil {
