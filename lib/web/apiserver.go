@@ -2912,8 +2912,11 @@ type ssoCallbackResponse struct {
 }
 
 func ssoSetWebSessionAndRedirectURL(w http.ResponseWriter, r *http.Request, response *ssoCallbackResponse) error {
-	if err := csrf.VerifyToken(response.csrfToken, r); err != nil {
-		return trace.Wrap(err)
+	// csrf token is absent in case of unsolicited SAML response.
+	if response.csrfToken != "" {
+		if err := csrf.VerifyToken(response.csrfToken, r); err != nil {
+			return trace.Wrap(err)
+		}
 	}
 
 	if err := SetSessionCookie(w, response.username, response.sessionName); err != nil {

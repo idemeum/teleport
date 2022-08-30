@@ -40,6 +40,8 @@ import (
 	saml2 "github.com/russellhaering/gosaml2"
 )
 
+const dummy_request_id = "00000000-0000-0000-0000-000000000000"
+
 // UpsertSAMLConnector creates or updates a SAML connector.
 func (a *Server) UpsertSAMLConnector(ctx context.Context, connector types.SAMLConnector) error {
 	if err := a.Identity.UpsertSAMLConnector(ctx, connector); err != nil {
@@ -158,6 +160,55 @@ func (a *Server) getSAMLConnectorAndProvider(ctx context.Context, req types.SAML
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
 	}
+	provider, err := a.getSAMLProvider(connector)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+
+	return connector, provider, nil
+}
+
+func (a *Server) resolveSAMLContext(ctx context.Context, samlResponse string) (types.SAMLAuthRequest, types.SAMLConnector, *saml2.SAMLServiceProvider, error) {
+	requestID, err := ParseSAMLInResponseTo(samlResponse)
+	if err != nil {
+		return types.SAMLAuthRequest{}, nil, nil, trace.Wrap(err)
+	}
+
+	if requestID == "" {
+		request := types.SAMLAuthRequest{
+			ID:               dummy_request_id,
+			CreateWebSession: true,
+		}
+
+		connector, provider, err := a.getFirstSAMLConnectorAndProvider(ctx)
+		if err != nil {
+			return request, nil, nil, trace.Wrap(err, "Failed to find default SAML connector")
+		}
+		request.ConnectorID = connector.GetName()
+		return request, connector, provider, nil
+	}
+
+	request, err := a.Identity.GetSAMLAuthRequest(ctx, requestID)
+	if err != nil {
+		return *request, nil, nil, trace.Wrap(err, "Failed to get SAML Auth Request")
+	}
+	connector, provider, err := a.getSAMLConnectorAndProvider(ctx, *request)
+	if err != nil {
+		return *request, nil, nil, trace.Wrap(err, "Failed to find SAML connector")
+	}
+	return *request, connector, provider, nil
+}
+
+func (a *Server) getFirstSAMLConnectorAndProvider(ctx context.Context) (types.SAMLConnector, *saml2.SAMLServiceProvider, error) {
+	connectors, err := a.Identity.GetSAMLConnectors(ctx, true)
+	if err != nil {
+		return nil, nil, trace.Wrap(err)
+	}
+	if len(connectors) == 0 {
+		return nil, nil, trace.BadParameter("missing saml connector")
+	}
+	connector := connectors[0]
+
 	provider, err := a.getSAMLProvider(connector)
 	if err != nil {
 		return nil, nil, trace.Wrap(err)
@@ -322,19 +373,11 @@ func ParseSAMLInResponseTo(response string) (string, error) {
 		return "", trace.BadParameter("unable to parse response")
 	}
 
-	// teleport only supports sending party initiated flows (Teleport sends an
-	// AuthnRequest to the IdP and gets a SAMLResponse from the IdP). identity
-	// provider initiated flows (where Teleport gets an unsolicited SAMLResponse
-	// from the IdP) are not supported.
 	el := doc.Root()
 	responseTo := el.SelectAttr("InResponseTo")
-	if responseTo == nil {
-		message := "teleport does not support initiating login from a SAML identity provider, login must be initiated from either the Teleport Web UI or CLI"
-		log.Infof(message)
-		return "", trace.NotImplemented(message)
-	}
-	if responseTo.Value == "" {
-		return "", trace.BadParameter("InResponseTo can not be empty")
+	if responseTo == nil || responseTo.Value == "" {
+		// IDEMEUM supports unsolicited SAML responses
+		return "", nil
 	}
 	return responseTo.Value, nil
 }
@@ -417,22 +460,11 @@ func (a *Server) ValidateSAMLResponse(ctx context.Context, samlResponse string) 
 }
 
 func (a *Server) validateSAMLResponse(ctx context.Context, diagCtx *ssoDiagContext, samlResponse string) (*SAMLAuthResponse, error) {
-	requestID, err := ParseSAMLInResponseTo(samlResponse)
+	request, connector, provider, err := a.resolveSAMLContext(ctx, samlResponse)
 	if err != nil {
-		return nil, trace.Wrap(err)
+		return nil, trace.Wrap(err, "Failed to get SAML request, connector and provider")
 	}
-	diagCtx.requestID = requestID
-
-	request, err := a.Identity.GetSAMLAuthRequest(ctx, requestID)
-	if err != nil {
-		return nil, trace.Wrap(err, "Failed to get SAML Auth Request")
-	}
-	diagCtx.info.TestFlow = request.SSOTestFlow
-
-	connector, provider, err := a.getSAMLConnectorAndProvider(ctx, *request)
-	if err != nil {
-		return nil, trace.Wrap(err, "Failed to get SAML connector and provider")
-	}
+	diagCtx.requestID = request.ID
 
 	assertionInfo, err := provider.RetrieveAssertionInfo(samlResponse)
 	if err != nil {
@@ -462,6 +494,10 @@ func (a *Server) validateSAMLResponse(ctx context.Context, diagCtx *ssoDiagConte
 			vals = append(vals, vv.Value)
 		}
 		log.Debugf("SAML assertion: %q: %q.", key, vals)
+		if request.ID == dummy_request_id && key == "remote_server_destination" {
+			request.ClientRedirectURL = vals[0]
+			continue
+		}
 		attributeStatements[key] = vals
 	}
 
@@ -476,7 +512,7 @@ func (a *Server) validateSAMLResponse(ctx context.Context, diagCtx *ssoDiagConte
 
 	// Calculate (figure out name, roles, traits, session TTL) of user and
 	// create the user in the backend.
-	params, err := a.calculateSAMLUser(diagCtx, connector, *assertionInfo, request)
+	params, err := a.calculateSAMLUser(diagCtx, connector, *assertionInfo, &request)
 	if err != nil {
 		return nil, trace.Wrap(err, "Failed to calculate user attributes.")
 	}
@@ -498,7 +534,7 @@ func (a *Server) validateSAMLResponse(ctx context.Context, diagCtx *ssoDiagConte
 
 	// Auth was successful, return session, certificate, etc. to caller.
 	auth := &SAMLAuthResponse{
-		Req: *request,
+		Req: request,
 		Identity: types.ExternalIdentity{
 			ConnectorID: params.connectorName,
 			Username:    params.username,
