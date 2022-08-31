@@ -26,19 +26,19 @@ const (
   --token=xyz
 
   This token is needed to connect a node or web app to an auth server. Get it
-  by running "tctl tokens add --type=node" or "tctl tokens add --type=app" to
+  by running "ictl tokens add --type=node" or "ictl tokens add --type=app" to
   join an SSH server or web app to your cluster respectively. It's used once
   and ignored afterwards.
 `
 
 	appUsageExamples = `
-> teleport app start --token=xyz --auth-server=proxy.example.com:3080 \
+> idemeum app start --token=xyz --auth-server=proxy.example.com:3080 \
     --name="example-app" \
     --uri="http://localhost:8080"
   Starts an app server that proxies the application "example-app" running at
   http://localhost:8080.
 
-> teleport app start --token=xyz --auth-server=proxy.example.com:3080 \
+> idemeum app start --token=xyz --auth-server=proxy.example.com:3080 \
     --name="example-app" \
     --uri="http://localhost:8080" \
     --labels=group=dev
@@ -46,15 +46,15 @@ const (
   allows access to users with the role "group=dev".`
 
 	dbUsageExamples = `
-> teleport db start --token=xyz --auth-server=proxy.example.com:3080 \
+> idemeum db start --token=xyz --auth-server=proxy.example.com:3080 \
   --name="example-db" \
   --protocol="postgres" \
   --uri="localhost:5432"
 Starts a database server that proxies PostgreSQL database "example-db" running
-at localhost:5432. The database must be configured with Teleport CA and key
+at localhost:5432. The database must be configured with Idemeum CA and key
 pair issued by "tctl auth sign --format=db".
 
-> teleport db start --token=xyz --auth-server=proxy.example.com:3080 \
+> idemeum db start --token=xyz --auth-server=proxy.example.com:3080 \
   --name="aurora-db" \
   --protocol="mysql" \
   --uri="example.cluster-abcdefghij.us-west-1.rds.amazonaws.com:3306" \
@@ -64,11 +64,11 @@ Starts a database server that proxies Aurora MySQL database running in AWS
 region us-west-1 which only allows access to users with the role "env=aws".`
 
 	dbCreateConfigExamples = `
-> teleport db configure create --rds-discovery=us-west-1 --rds-discovery=us-west-2
+> idemeum db configure create --rds-discovery=us-west-1 --rds-discovery=us-west-2
 Generates a configuration with samples and Aurora/RDS auto-discovery enabled on
 the "us-west-1" and "us-west-2" regions.
 
-> teleport db configure create \
+> idemeum db configure create \
    --token=/tmp/token \
    --proxy=localhost:3080 \
    --name=sample-db \
@@ -77,7 +77,7 @@ the "us-west-1" and "us-west-2" regions.
    --labels=env=prod
 Generates a configuration with a Postgres database.
 
-> teleport db configure create --output file:///etc/teleport.yaml
+> idemeum db configure create --output file:///etc/teleport.yaml
 Generates a configuration with samples and write to "/etc/teleport.yaml".`
 )
 
@@ -85,15 +85,15 @@ var (
 	usageExamples = fmt.Sprintf(`
 Examples:
 
-> teleport start
-  By default without any configuration, teleport starts running as a single-node
+> idemeum start
+  By default without any configuration, idemeum starts running as a single-node
   cluster. It's the equivalent of running with --roles=node,proxy,auth
 
-> teleport start --roles=node --auth-server=10.1.0.1 --token=xyz --nodename=db
+> idemeum start --roles=node --auth-server=10.1.0.1 --token=xyz --nodename=db
   Starts a node named 'db' running in strictly SSH mode role, joining the cluster
   serviced by the auth server running on 10.1.0.1
 
-> teleport start --roles=node --auth-server=10.1.0.1 --labels=db=master
+> idemeum start --roles=node --auth-server=10.1.0.1 --labels=db=master
   Same as the above, but the node runs with db=master label and can be connected
   to using that label in addition to its name.
 %v

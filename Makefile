@@ -12,6 +12,7 @@
 #   Pre-releases:      "1.0.0-alpha.1", "1.0.0-beta.2", "1.0.0-rc.3"
 #   Master/dev branch: "1.0.0-dev"
 VERSION=10.0.2
+IDEMEUM_VERSION=1.0.0
 
 DOCKER_IMAGE ?= quay.io/gravitational/teleport
 DOCKER_IMAGE_CI ?= quay.io/gravitational/teleport-ci
@@ -29,7 +30,7 @@ DATADIR ?= /usr/local/share/teleport
 ADDFLAGS ?=
 PWD ?= `pwd`
 TELEPORT_DEBUG ?= no
-GITTAG=v$(VERSION)
+GITTAG=v$(IDEMEUM_VERSION)
 BUILDFLAGS ?= $(ADDFLAGS) -ldflags '-w -s'
 CGOFLAG ?= CGO_ENABLED=1
 CGOFLAG_TSH ?= CGO_ENABLED=1
@@ -63,14 +64,14 @@ endif
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 FIPS ?=
-RELEASE = teleport-$(GITTAG)-$(OS)-$(ARCH)-bin
+RELEASE = idemeum-remote-access-$(GITTAG)-$(OS)-$(ARCH)-bin
 
 # FIPS support must be requested at build time.
 FIPS_MESSAGE := "without FIPS support"
 ifneq ("$(FIPS)","")
 FIPS_TAG := fips
 FIPS_MESSAGE := "with FIPS support"
-RELEASE = teleport-$(GITTAG)-$(OS)-$(ARCH)-fips-bin
+RELEASE = idemeum-remote-access-$(GITTAG)-$(OS)-$(ARCH)-fips-bin
 endif
 
 # PAM support will only be built into Teleport if headers exist at build time.
@@ -229,7 +230,7 @@ $(BUILDDIR)/tctl:
 
 .PHONY: $(BUILDDIR)/teleport
 $(BUILDDIR)/teleport: ensure-webassets bpf-bytecode rdpclient
-	GOOS=$(OS) GOARCH=$(ARCH) $(CGOFLAG) go build -tags "$(PAM_TAG) $(FIPS_TAG) $(BPF_TAG) $(WEBASSETS_TAG) $(RDPCLIENT_TAG)" -o $(BUILDDIR)/teleport $(BUILDFLAGS) ./tool/teleport
+	GOOS=$(OS) GOARCH=$(ARCH) $(CGOFLAG) go build -tags "$(PAM_TAG) $(FIPS_TAG) $(BPF_TAG) $(WEBASSETS_TAG) $(RDPCLIENT_TAG)" -o $(BUILDDIR)/idemeum $(BUILDFLAGS) ./tool/teleport
 
 .PHONY: $(BUILDDIR)/tsh
 $(BUILDDIR)/tsh:
@@ -323,7 +324,7 @@ clean:
 	rm -rf $(RS_BPF_BUILDDIR)
 	-cargo clean
 	-go clean -cache
-	rm -rf teleport
+	rm -rf idemeum
 	rm -rf *.gz
 	rm -rf *.zip
 	rm -f gitref.go
@@ -366,16 +367,16 @@ release-arm64:
 .PHONY:
 release-unix: clean full
 	@echo "---> Creating OSS release archive."
-	mkdir teleport
-	cp -rf $(BUILDDIR)/* \
-		examples \
+	mkdir idemeum
+	cp -rf $(BUILDDIR)/idemeum \
 		build.assets/install\
-		README.md \
-		CHANGELOG.md \
-		teleport/
-	echo $(GITTAG) > teleport/VERSION
-	tar $(TAR_FLAGS) -c teleport | gzip -n > $(RELEASE).tar.gz
-	rm -rf teleport
+		idemeum/
+	mkdir idemeum/systemd	
+	cp -f examples/systemd/teleport.service idemeum/systemd/idemeum.service
+
+	echo $(GITTAG) > idemeum/VERSION
+	tar $(TAR_FLAGS) -c idemeum | gzip -n > $(RELEASE).tar.gz
+	rm -rf idemeum
 	@echo "---> Created $(RELEASE).tar.gz."
 	@if [ -f e/Makefile ]; then \
 		rm -fr $(ASSETS_BUILDDIR)/webassets; \
