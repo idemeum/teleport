@@ -48,7 +48,7 @@ const js = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Teleport Redirection Service</title>
+    <title>Idemeum Redirection Service</title>
     <script nonce="%v">
       (function() {
         var url = new URL(window.location);

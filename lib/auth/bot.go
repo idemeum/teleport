@@ -115,7 +115,7 @@ func createBotUser(ctx context.Context, s *Server, botName string, resourceName 
 func (s *Server) createBot(ctx context.Context, req *proto.CreateBotRequest) (*proto.CreateBotResponse, error) {
 	if !modules.GetModules().Features().MachineID {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for Machine ID, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for Machine ID, please contact the cluster administrator")
 	}
 
 	if req.Name == "" {
@@ -461,7 +461,7 @@ func (s *Server) generateInitialBotCerts(ctx context.Context, username string, p
 
 	if !modules.GetModules().Features().MachineID {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for Machine ID, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for Machine ID, please contact the cluster administrator")
 	}
 
 	// Extract the user and role set for whom the certificate will be generated.

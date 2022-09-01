@@ -107,7 +107,7 @@ func getKubeCreds(ctx context.Context, log logrus.FieldLogger, tpClusterName, ku
 		case KubeService:
 			return nil, trace.BadParameter("no Kubernetes credentials found; Kubernetes_service requires either a valid kubeconfig_file or to run inside of a Kubernetes pod")
 		case LegacyProxyService:
-			log.Debugf("Could not load Kubernetes credentials. This proxy will still handle Kubernetes requests for trusted teleport clusters or Kubernetes nodes in this teleport cluster")
+			log.Debugf("Could not load Kubernetes credentials. This proxy will still handle Kubernetes requests for trusted idemeum clusters or Kubernetes nodes in this idemeum cluster")
 		}
 		return map[string]*kubeCreds{}, nil
 	}
@@ -152,7 +152,7 @@ func extractKubeCreds(ctx context.Context, cluster string, clientCfg *rest.Confi
 	// For each loaded cluster, check impersonation permissions. This
 	// check only logs when permissions are not configured, but does not fail startup.
 	if err := checkPermissions(ctx, cluster, client.AuthorizationV1().SelfSubjectAccessReviews()); err != nil {
-		log.WithError(err).Warning("Failed to test the necessary Kubernetes permissions. The target Kubernetes cluster may be down or have misconfigured RBAC. This teleport instance will still handle Kubernetes requests towards this Kubernetes cluster.")
+		log.WithError(err).Warning("Failed to test the necessary Kubernetes permissions. The target Kubernetes cluster may be down or have misconfigured RBAC. This idemeum instance will still handle Kubernetes requests towards this Kubernetes cluster.")
 		if serviceType != KubeService && kubeconfigPath != "" {
 			// We used to recommend users to set a dummy kubeconfig on root
 			// proxies to get kubernetes support working for leaf clusters:

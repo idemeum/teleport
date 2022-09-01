@@ -1001,7 +1001,7 @@ func (a *Server) generateUserCert(req certRequest) (*proto.Certs, error) {
 	}
 
 	if len(req.checker.GetAllowedResourceIDs()) > 0 && !modules.GetModules().Features().ResourceAccessRequests {
-		return nil, trace.AccessDenied("this Teleport cluster is not licensed for resource access requests, please contact the cluster administrator")
+		return nil, trace.AccessDenied("this idemeum cluster is not licensed for resource access requests, please contact the cluster administrator")
 	}
 
 	// Reject the cert request if there is a matching lock in force.
@@ -3071,7 +3071,7 @@ func (a *Server) CreateSessionTracker(ctx context.Context, tracker types.Session
 	for _, policySet := range tracker.GetHostPolicySets() {
 		if len(policySet.RequireSessionJoin) != 0 {
 			if !modules.GetModules().Features().ModeratedSessions {
-				return nil, trace.AccessDenied("this Teleport cluster is not licensed for moderated sessions, please contact the cluster administrator")
+				return nil, trace.AccessDenied("this idemeum cluster is not licensed for moderated sessions, please contact the cluster administrator")
 			}
 		}
 	}

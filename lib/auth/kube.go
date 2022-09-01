@@ -66,7 +66,7 @@ func (s *Server) ProcessKubeCSR(req KubeCSR) (*KubeCSRResponse, error) {
 	ctx := context.TODO()
 	if !modules.GetModules().Features().Kubernetes {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for Kubernetes, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for Kubernetes, please contact the cluster administrator")
 	}
 	if err := req.CheckAndSetDefaults(); err != nil {
 		return nil, trace.Wrap(err)
