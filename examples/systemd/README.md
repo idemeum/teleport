@@ -1,24 +1,24 @@
 # Systemd Service
 
-Sample configuration of `systemd` service file for Teleport
+Sample configuration of `systemd` service file for Idemeum
 To use it:
 
 ```bash
-sudo cp teleport.service /etc/systemd/system/teleport.service
+sudo cp idemeum.service /etc/systemd/system/idemeum.service
 sudo systemctl daemon-reload
-sudo systemctl enable teleport
-sudo systemctl start teleport
+sudo systemctl enable idemeum
+sudo systemctl start idemeum
 ```
 
 To check on Teleport daemon status:
 
 ```bash
-systemctl status teleport
+systemctl status idemeum
 ```
 
-To take a look at Teleport system log:
+To take a look at idemeum system log:
 
 ```bash
-journalctl -fu teleport
+journalctl -fu idemeum
 ```
 

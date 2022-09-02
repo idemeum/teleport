@@ -1,14 +1,14 @@
 [Unit]
-Description=Idemeum SSH Service
+Description=Teleport SSH Service
 After=network.target
 
 [Service]
 Type=simple
 Restart=on-failure
-EnvironmentFile=-/etc/default/idemeum
-ExecStart=/usr/local/bin/idemeum start --pid-file=/run/idemeum.pid
+EnvironmentFile=-/etc/default/teleport
+ExecStart=/usr/local/bin/teleport start --pid-file=/run/teleport.pid
 ExecReload=/bin/kill -HUP $MAINPID
-PIDFile=/run/idemeum.pid
+PIDFile=/run/teleport.pid
 LimitNOFILE=8192
 
 [Install]

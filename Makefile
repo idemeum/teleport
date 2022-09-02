@@ -372,8 +372,8 @@ release-unix: clean full
 		build.assets/install\
 		idemeum/
 	mkdir idemeum/systemd	
-	cp -f examples/systemd/teleport.service idemeum/systemd/idemeum.service
-
+	cp -f examples/systemd/idemeum.service idemeum/systemd/idemeum.service
+	cp -f examples/systemd/README.md idemeum/systemd/README.md
 	echo $(GITTAG) > idemeum/VERSION
 	tar $(TAR_FLAGS) -c idemeum | gzip -n > $(RELEASE).tar.gz
 	rm -rf idemeum
@@ -963,7 +963,7 @@ install: build
 	@echo "\n** Make sure to run 'make install' as root! **\n"
 	cp -f $(BUILDDIR)/tctl      $(BINDIR)/
 	cp -f $(BUILDDIR)/tsh       $(BINDIR)/
-	cp -f $(BUILDDIR)/teleport  $(BINDIR)/
+	cp -f $(BUILDDIR)/idemeum  $(BINDIR)/
 	mkdir -p $(DATADIR)
 
 
