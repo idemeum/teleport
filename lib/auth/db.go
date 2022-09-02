@@ -125,7 +125,7 @@ func getServerNames(req *proto.DatabaseCertRequest) []string {
 func (s *Server) SignDatabaseCSR(ctx context.Context, req *proto.DatabaseCSRRequest) (*proto.DatabaseCSRResponse, error) {
 	if !modules.GetModules().Features().DB {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for database access, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for database access, please contact the cluster administrator")
 	}
 
 	log.Debugf("Signing database CSR for cluster %v.", req.ClusterName)
@@ -222,7 +222,7 @@ func (s *Server) SignDatabaseCSR(ctx context.Context, req *proto.DatabaseCSRRequ
 func (s *Server) GenerateSnowflakeJWT(ctx context.Context, req *proto.SnowflakeJWTRequest) (*proto.SnowflakeJWTResponse, error) {
 	if !modules.GetModules().Features().DB {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for database access, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for database access, please contact the cluster administrator")
 	}
 
 	clusterName, err := s.GetClusterName()

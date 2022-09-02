@@ -42,7 +42,7 @@ import (
 func (s *Server) CreateAppSession(ctx context.Context, req types.CreateAppSessionRequest, user types.User, identity tlsca.Identity, checker services.AccessChecker) (types.WebSession, error) {
 	if !modules.GetModules().Features().App {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster/Applications/Visual Studio Code.app/Contents/Resources/app/out/vs/code/electron-sandbox/workbench/workbench.html is not licensed for application access, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for application access, please contact the cluster administrator")
 	}
 
 	// Don't let the app session go longer than the identity expiration,
@@ -279,7 +279,7 @@ func (s *Server) CreateSnowflakeSession(ctx context.Context, req types.CreateSno
 ) (types.WebSession, error) {
 	if !modules.GetModules().Features().DB {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for database access, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for database access, please contact the cluster administrator")
 	}
 
 	// Don't let the app session go longer than the identity expiration,

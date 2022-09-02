@@ -370,7 +370,7 @@ func (s *localSite) skipDirectDial(params DialParams) (bool, error) {
 }
 
 func getTunnelErrorMessage(params DialParams, connStr string, err error) string {
-	errorMessageTemplate := `Teleport proxy failed to connect to %q agent %q over %s:
+	errorMessageTemplate := `Idemeum proxy failed to connect to %q agent %q over %s:
 
   %v
 

@@ -35,7 +35,7 @@ import (
 func (s *Server) GenerateWindowsDesktopCert(ctx context.Context, req *proto.WindowsDesktopCertRequest) (*proto.WindowsDesktopCertResponse, error) {
 	if !modules.GetModules().Features().Desktop {
 		return nil, trace.AccessDenied(
-			"this Teleport cluster is not licensed for desktop access, please contact the cluster administrator")
+			"this idemeum cluster is not licensed for desktop access, please contact the cluster administrator")
 	}
 	csr, err := tlsca.ParseCertificateRequestPEM(req.CSR)
 	if err != nil {
