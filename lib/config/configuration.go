@@ -709,14 +709,23 @@ func applyKeyStoreConfig(fc *FileConfig, cfg *service.Config) error {
 	return nil
 }
 
-// applyAppPublisherConfig applies file configuration for the "proxy_service" section.
+// applyAppPublisherConfig applies file configuration for the "auth-service" section.
 func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
+
 	if fc.Auth.AppPublisherConfig == nil {
 		cfg.Auth.AppPublisherConfig.SQSQueueName = ""
 		return nil
 	}
 
+	enabled, _ := apiutils.ParseBool(fc.Auth.AppPublisherConfig.Enabled)
+	cfg.Auth.AppPublisherConfig.Enabled = enabled
+
 	cfg.Auth.AppPublisherConfig.SQSQueueName = fc.Auth.AppPublisherConfig.SQSQueueName
+
+	if fc.TenantUrl != "" {
+		cfg.Auth.AppPublisherConfig.TenantUrl = fc.TenantUrl
+	}
+
 	return nil
 }
 

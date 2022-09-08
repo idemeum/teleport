@@ -417,6 +417,7 @@ func (h *sshServerHeartbeatV2) FallbackAnnounce(ctx context.Context) (ok bool) {
 		return false
 	}
 	server := h.getServer()
+	log.Infof("Upserting the node :%v with addr :%v ", server.GetName(), server.GetHostname())
 	_, err := h.announcer.UpsertNode(ctx, server)
 	if err != nil {
 		log.Warnf("Failed to perform fallback heartbeat for ssh server: %v", err)

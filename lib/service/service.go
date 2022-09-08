@@ -1512,7 +1512,6 @@ func (process *TeleportProcess) initAuthService() error {
 		KeyStoreConfig:          cfg.Auth.KeyStore,
 		Emitter:                 checkingEmitter,
 		Streamer:                events.NewReportingStreamer(checkingStreamer, process.Config.UploadEventsC),
-		TenantUrl:               cfg.TenantUrl,
 		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
 	})
 	if err != nil {

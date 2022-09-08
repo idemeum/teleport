@@ -1,5 +1,7 @@
 package publisher
 
+import log "github.com/sirupsen/logrus"
+
 type RemoteAppType string
 
 const (
@@ -24,7 +26,9 @@ type AppPublisher interface {
 }
 
 type AppPublisherConfig struct {
+	TenantUrl    string
 	SQSQueueName string
+	Enabled      bool
 }
 
 func (cfg *AppPublisherConfig) CheckAndSetDefaults() error {
@@ -36,5 +40,35 @@ func (cfg *AppPublisherConfig) CheckAndSetDefaults() error {
 
 func NewAppPublisher(config AppPublisherConfig) AppPublisher {
 	config.CheckAndSetDefaults()
-	return NewSQSAppPublisherService(config.SQSQueueName)
+	if config.Enabled {
+		log.Info("Publishing app changes to idemeum enabled")
+		return &defaultAppPublisher{
+			publisher: NewSQSAppPublisherService(config.SQSQueueName),
+			cfg:       config,
+		}
+	}
+	log.Info("Publishing app changes to idemeum disabled")
+	return &defaultAppPublisher{publisher: &noOpAppPublisher{}, cfg: config}
+}
+
+type defaultAppPublisher struct {
+	publisher AppPublisher
+	cfg       AppPublisherConfig
+}
+
+func (p *defaultAppPublisher) Publish(event AppChangeEvent) error {
+	if event.Tenant == "" {
+		event.Tenant = p.cfg.TenantUrl
+	}
+
+	log.Infof("Publishing event for tenant: %v and app type: %v", event.Tenant, event.AppType)
+	return p.publisher.Publish(event)
+}
+
+type noOpAppPublisher struct {
+}
+
+func (p *noOpAppPublisher) Publish(event AppChangeEvent) error {
+	log.Infof("No op publishing event for tenant: %v and app type: %v", event.Tenant, event.AppType)
+	return nil
 }

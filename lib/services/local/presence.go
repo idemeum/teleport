@@ -28,6 +28,7 @@ import (
 	apidefaults "github.com/gravitational/teleport/api/defaults"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/backend"
+	"github.com/gravitational/teleport/lib/publisher"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/utils"
 
@@ -42,6 +43,7 @@ type PresenceService struct {
 	log    *logrus.Entry
 	jitter utils.Jitter
 	backend.Backend
+	publisher publisher.AppPublisher
 }
 
 // backendItemToResourceFunc defines a function that unmarshals a
@@ -50,10 +52,15 @@ type backendItemToResourceFunc func(item backend.Item) (types.ResourceWithLabels
 
 // NewPresenceService returns new presence service instance
 func NewPresenceService(b backend.Backend) *PresenceService {
+	return NewPresenceServiceV2(b, nil)
+}
+
+func NewPresenceServiceV2(b backend.Backend, publisher publisher.AppPublisher) *PresenceService {
 	return &PresenceService{
-		log:     logrus.WithFields(logrus.Fields{trace.Component: "Presence"}),
-		jitter:  utils.NewJitter(),
-		Backend: b,
+		log:       logrus.WithFields(logrus.Fields{trace.Component: "Presence"}),
+		jitter:    utils.NewJitter(),
+		Backend:   b,
+		publisher: publisher,
 	}
 }
 
@@ -176,13 +183,21 @@ func (s *PresenceService) upsertServer(ctx context.Context, prefix string, serve
 // DeleteAllNodes deletes all nodes in a namespace
 func (s *PresenceService) DeleteAllNodes(ctx context.Context, namespace string) error {
 	startKey := backend.Key(nodesPrefix, namespace)
-	return s.DeleteRange(ctx, startKey, backend.RangeEnd(startKey))
+	err := s.DeleteRange(ctx, startKey, backend.RangeEnd(startKey))
+	if err == nil {
+		publish(s, publisher.Server)
+	}
+	return err
 }
 
 // DeleteNode deletes node
 func (s *PresenceService) DeleteNode(ctx context.Context, namespace string, name string) error {
 	key := backend.Key(nodesPrefix, namespace, name)
-	return s.Delete(ctx, key)
+	err := s.Delete(ctx, key)
+	if err == nil {
+		publish(s, publisher.Server)
+	}
+	return err
 }
 
 // GetNode returns a node by name and namespace.
@@ -247,6 +262,8 @@ func (s *PresenceService) UpsertNode(ctx context.Context, server types.Server) (
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
+	nodeExists := isNodeExists(s, ctx, server)
 	lease, err := s.Put(ctx, backend.Item{
 		Key:     backend.Key(nodesPrefix, server.GetNamespace(), server.GetName()),
 		Value:   value,
@@ -256,6 +273,12 @@ func (s *PresenceService) UpsertNode(ctx context.Context, server types.Server) (
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
+	if !nodeExists && server.GetIdemeumAppId() != "" && s.publisher != nil {
+		logrus.Infof("Publish the upsert node :%v with addr :%v value: %v", server.GetName(), server.GetHostname(), string(value))
+		publish(s, publisher.Server)
+	}
+
 	if server.Expiry().IsZero() {
 		return &types.KeepAlive{}, nil
 	}
@@ -1221,6 +1244,7 @@ func (s *PresenceService) UpsertApplicationServer(ctx context.Context, server ty
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
 	if server.Expiry().IsZero() {
 		return &types.KeepAlive{}, nil
 	}
@@ -1721,6 +1745,19 @@ func backendItemToServer(kind string) backendItemToResourceFunc {
 			services.WithExpires(item.Expires),
 		)
 	}
+}
+
+func publish(s *PresenceService, appType publisher.RemoteAppType) {
+	if s.publisher != nil {
+		s.publisher.Publish(publisher.AppChangeEvent{
+			AppType: appType,
+		})
+	}
+}
+
+func isNodeExists(s *PresenceService, ctx context.Context, server types.Server) bool {
+	_, err := s.Get(ctx, backend.Key(nodesPrefix, server.GetNamespace(), server.GetName()))
+	return err == nil
 }
 
 const (

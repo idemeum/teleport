@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"encoding/json"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -33,7 +34,6 @@ func NewSQSAppPublisherService(queueName string) AppPublisher {
 }
 
 func (s *sqsAppPublisherService) Publish(event AppChangeEvent) error {
-	log.Infof("Publishing event for tenant: %v and app type: %v", event.Tenant, event.AppType)
 	queueUrlOutput, err := s.sqsService.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: &s.config.QueueName,
 	})

@@ -777,7 +777,7 @@ func (a *ServerWithRoles) PingInventory(ctx context.Context, req proto.Inventory
 }
 
 func (a *ServerWithRoles) UpsertNode(ctx context.Context, s types.Server) (*types.KeepAlive, error) {
-	log.Infof("Add or update server :%v", s.GetName())
+	log.Infof("Upserting the node :%v with addr :%v ", s.GetName(), s.GetHostname())
 	if err := a.action(s.GetNamespace(), types.KindNode, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -4927,6 +4927,5 @@ func verbsToReplaceResourceWithOrigin(stored types.ResourceWithOrigin) []string 
 func publishAppChanges(server *Server, appType publisher.RemoteAppType) {
 	server.AppPublisher.Publish(publisher.AppChangeEvent{
 		AppType: appType,
-		Tenant:  server.GetTenantUrl(),
 	})
 }
