@@ -105,7 +105,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		cfg.Trust = local.NewCAService(cfg.Backend)
 	}
 	if cfg.Presence == nil {
-		cfg.Presence = local.NewPresenceService(cfg.Backend)
+		cfg.Presence = local.NewPresenceServiceV2(cfg.Backend, cfg.AppPublisher)
 	}
 	if cfg.Provisioner == nil {
 		cfg.Provisioner = local.NewProvisioningService(cfg.Backend)
@@ -211,7 +211,6 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		keyStore:     keyStore,
 		getClaimsFun: getClaims,
 		inventory:    inventory.NewController(cfg.Presence),
-		tenantUrl:    cfg.TenantUrl,
 		AppPublisher: cfg.AppPublisher,
 	}
 	for _, o := range opts {
@@ -383,14 +382,8 @@ type Server struct {
 
 	inventory *inventory.Controller
 
-	//Tenant Url
-	tenantUrl string
 	//App Publisher
 	AppPublisher publisher.AppPublisher
-}
-
-func (a *Server) GetTenantUrl() string {
-	return a.tenantUrl
 }
 
 func (a *Server) CloseContext() context.Context {

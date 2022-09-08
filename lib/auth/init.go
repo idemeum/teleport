@@ -21,9 +21,10 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/gravitational/teleport/lib/publisher"
 	"strings"
 	"time"
+
+	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -171,9 +172,6 @@ type InitConfig struct {
 	WindowsDesktops services.WindowsDesktops
 
 	SessionTrackerService services.SessionTrackerService
-
-	//Tenant url
-	TenantUrl string
 
 	//App Publisher
 	AppPublisher publisher.AppPublisher

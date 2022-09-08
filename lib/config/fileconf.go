@@ -721,6 +721,7 @@ type Auth struct {
 }
 
 type AppPublisherConfig struct {
+	Enabled      string `yaml:"enabled,omitempty"`
 	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
 }
 
