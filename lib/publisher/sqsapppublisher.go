@@ -16,10 +16,11 @@ type sqsAppPublisherService struct {
 }
 
 type sqsPublisherConfig struct {
-	QueueName string
+	QueueName      string
+	DelayInSeconds int64
 }
 
-func NewSQSAppPublisherService(queueName string) AppPublisher {
+func NewSQSAppPublisherService(cfg AppPublisherConfig) AppPublisher {
 	log.Info("Initializing the sqs app publisher service")
 	session := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
@@ -27,7 +28,8 @@ func NewSQSAppPublisherService(queueName string) AppPublisher {
 
 	sqsService := sqs.New(session)
 	config := sqsPublisherConfig{
-		QueueName: queueName,
+		QueueName:      cfg.SQSQueueName,
+		DelayInSeconds: cfg.DelayInSeconds,
 	}
 	log.Info("Initialized the sqs app publisher service")
 	return &sqsAppPublisherService{sqsService, config}
@@ -48,8 +50,9 @@ func (s *sqsAppPublisherService) Publish(event AppChangeEvent) error {
 
 	log.Infof("Publishing the message for app type: %v", event.AppType)
 	_, err = s.sqsService.SendMessage(&sqs.SendMessageInput{
-		MessageBody: aws.String(string(messageJsonData)),
-		QueueUrl:    queueUrlOutput.QueueUrl,
+		MessageBody:  aws.String(string(messageJsonData)),
+		QueueUrl:     queueUrlOutput.QueueUrl,
+		DelaySeconds: &s.config.DelayInSeconds,
 	})
 
 	if err != nil {
