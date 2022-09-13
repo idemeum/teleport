@@ -212,7 +212,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		getClaimsFun:           getClaims,
 		inventory:              inventory.NewController(cfg.Presence),
 		AppPublisher:           cfg.AppPublisher,
-		RemoteAccessAppWatcher: publisher.NewRemoteAccessAppWatcher(context.Background(), cfg.Events, cfg.AppPublisher),
+		RemoteAccessAppWatcher: publisher.NewIdemeumRemoteResourceWatcher(context.Background(), cfg.Events, cfg.AppPublisher),
 	}
 	for _, o := range opts {
 		o(&as)
