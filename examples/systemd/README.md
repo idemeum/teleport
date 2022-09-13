@@ -1,7 +1,8 @@
 # Systemd Service
 
-Sample configuration of `systemd` service file for Idemeum
-To use it:
+Sample configuration of `systemd` service file for idemeum
+
+To start idemeum agent as daemon:
 
 ```bash
 sudo cp idemeum.service /etc/systemd/system/idemeum.service
@@ -10,7 +11,7 @@ sudo systemctl enable idemeum
 sudo systemctl start idemeum
 ```
 
-To check on Teleport daemon status:
+To check on idemeum daemon status:
 
 ```bash
 systemctl status idemeum

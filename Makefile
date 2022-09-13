@@ -374,6 +374,7 @@ release-unix: clean full
 	mkdir idemeum/systemd	
 	cp -f examples/systemd/idemeum.service idemeum/systemd/idemeum.service
 	cp -f examples/systemd/README.md idemeum/systemd/README.md
+	cp -f examples/idemeum-readme.md idemeum/README.md
 	echo $(GITTAG) > idemeum/VERSION
 	tar $(TAR_FLAGS) -c idemeum | gzip -n > $(RELEASE).tar.gz
 	rm -rf idemeum

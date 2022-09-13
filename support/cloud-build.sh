@@ -11,8 +11,9 @@ s3bucketName=
 #Upload file to s3
 function upload() {
    releaseFile="$(basename -- $1)"
-   echo "Copying the file to s3://$s3bucketName/$releaseFile"
-   aws --region $region --profile $profile s3 cp $1 s3://$s3bucketName/$releaseFile
+   s3FileName="s3://$s3bucketName/remote-access-releases/$releaseFile"
+   echo "Copying the file to $s3FileName"
+   aws --region $region --profile $profile s3 cp $1 $s3FileName
 }
 
 function cleanup() {
