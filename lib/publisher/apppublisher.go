@@ -10,9 +10,17 @@ const (
 	Database   RemoteAppType = "REMOTE_DATABASE"
 	Desktop    RemoteAppType = "REMOTE_DESKTOP"
 	Kubernetes RemoteAppType = "REMOTE_KUBERNETES"
+	Invalid    RemoteAppType = "INVALID"
 
 	//default sqs queue name
 	defaultSQSQueueName = "remote-access-resource-change-notification-queue"
+
+	// added delay in seconds for the sqs message
+	// teleport uses in-memory cache for resources when the resource is added in database
+	// it takes time to reflect in local in-memory cache.
+	// Added delay for sqs message so that when the app management retrives the resources
+	// they are reflected
+	defaultDelayInSeconds = 30
 )
 
 type AppChangeEvent struct {
@@ -26,14 +34,19 @@ type AppPublisher interface {
 }
 
 type AppPublisherConfig struct {
-	TenantUrl    string
-	SQSQueueName string
-	Enabled      bool
+	TenantUrl      string
+	SQSQueueName   string
+	Enabled        bool
+	DelayInSeconds int64
 }
 
 func (cfg *AppPublisherConfig) CheckAndSetDefaults() error {
 	if cfg.SQSQueueName == "" {
 		cfg.SQSQueueName = defaultSQSQueueName
+	}
+
+	if cfg.DelayInSeconds == 0 {
+		cfg.DelayInSeconds = defaultDelayInSeconds
 	}
 	return nil
 }
@@ -43,7 +56,7 @@ func NewAppPublisher(config AppPublisherConfig) AppPublisher {
 	if config.Enabled {
 		log.Info("Publishing app changes to idemeum enabled")
 		return &defaultAppPublisher{
-			publisher: NewSQSAppPublisherService(config.SQSQueueName),
+			publisher: NewSQSAppPublisherService(config),
 			cfg:       config,
 		}
 	}

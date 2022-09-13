@@ -52,10 +52,10 @@ type backendItemToResourceFunc func(item backend.Item) (types.ResourceWithLabels
 
 // NewPresenceService returns new presence service instance
 func NewPresenceService(b backend.Backend) *PresenceService {
-	return NewPresenceServiceV2(b, nil)
+	return NewIdemeumPresenceService(b, nil)
 }
 
-func NewPresenceServiceV2(b backend.Backend, publisher publisher.AppPublisher) *PresenceService {
+func NewIdemeumPresenceService(b backend.Backend, publisher publisher.AppPublisher) *PresenceService {
 	return &PresenceService{
 		log:       logrus.WithFields(logrus.Fields{trace.Component: "Presence"}),
 		jitter:    utils.NewJitter(),

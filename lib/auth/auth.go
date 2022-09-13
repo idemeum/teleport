@@ -105,7 +105,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		cfg.Trust = local.NewCAService(cfg.Backend)
 	}
 	if cfg.Presence == nil {
-		cfg.Presence = local.NewPresenceServiceV2(cfg.Backend, cfg.AppPublisher)
+		cfg.Presence = local.NewIdemeumPresenceService(cfg.Backend, cfg.AppPublisher)
 	}
 	if cfg.Provisioner == nil {
 		cfg.Provisioner = local.NewProvisioningService(cfg.Backend)
@@ -208,10 +208,11 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 			WindowsDesktops:       cfg.WindowsDesktops,
 			SessionTrackerService: cfg.SessionTrackerService,
 		},
-		keyStore:     keyStore,
-		getClaimsFun: getClaims,
-		inventory:    inventory.NewController(cfg.Presence),
-		AppPublisher: cfg.AppPublisher,
+		keyStore:               keyStore,
+		getClaimsFun:           getClaims,
+		inventory:              inventory.NewController(cfg.Presence),
+		AppPublisher:           cfg.AppPublisher,
+		RemoteAccessAppWatcher: publisher.NewRemoteAccessAppWatcher(context.Background(), cfg.Events, cfg.AppPublisher),
 	}
 	for _, o := range opts {
 		o(&as)
@@ -382,8 +383,8 @@ type Server struct {
 
 	inventory *inventory.Controller
 
-	//App Publisher
-	AppPublisher publisher.AppPublisher
+	AppPublisher           publisher.AppPublisher
+	RemoteAccessAppWatcher *publisher.RemoteAccessAppWatcher
 }
 
 func (a *Server) CloseContext() context.Context {

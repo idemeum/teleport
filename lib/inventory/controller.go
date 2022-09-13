@@ -266,9 +266,6 @@ func (c *Controller) handleSSHServerHB(handle *upstreamHandle, sshServer *types.
 	}
 
 	sshServer.SetExpiry(time.Now().Add(c.serverTTL).UTC())
-
-	log.Infof("Upserting the node :%v with addr :%v ", sshServer.GetName(), sshServer.GetHostname())
-
 	lease, err := c.auth.UpsertNode(c.closeContext, sshServer)
 	if err == nil {
 		c.testEvent(sshUpsertOk)
