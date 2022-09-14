@@ -11,12 +11,12 @@
     "telegraf_version": "{{env `TELEGRAF_VERSION`}}",
     "influxdb_version": "{{env `INFLUXDB_VERSION`}}",
     "grafana_version": "{{env `GRAFANA_VERSION`}}",
-    "ami_name": "teleport-debug-ami-{{env `TELEPORT_TYPE`}}-{{env `TELEPORT_VERSION`}}",
+    "ami_name": "idemeum-remote-access-{{env `TELEPORT_VERSION`}}",
     "build_type": "debug"
   },
   "builders": [{
     "name": "teleport-aws-linux",
-    "ami_description": "Gravitational Teleport using AWS Linux AMI",
+    "ami_description": "Idemeum remote access using AWS Linux AMI",
     "type": "amazon-ebs",
     "region": "{{user `aws_region`}}",
     "source_ami_filter": {

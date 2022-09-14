@@ -64,7 +64,6 @@ endif
 OS ?= $(shell go env GOOS)
 ARCH ?= $(shell go env GOARCH)
 FIPS ?=
-RELEASE_OLD = teleport-$(GITTAG)-$(OS)-$(ARCH)-bin
 RELEASE = idemeum-remote-access-$(GITTAG)-$(OS)-$(ARCH)-bin
 
 # FIPS support must be requested at build time.
@@ -72,7 +71,6 @@ FIPS_MESSAGE := "without FIPS support"
 ifneq ("$(FIPS)","")
 FIPS_TAG := fips
 FIPS_MESSAGE := "with FIPS support"
-RELEASE_OLD = teleport-$(GITTAG)-$(OS)-$(ARCH)-fips-bin
 RELEASE = idemeum-remote-access-$(GITTAG)-$(OS)-$(ARCH)-fips-bin
 endif
 
@@ -398,9 +396,9 @@ release-unix: clean full
 	mv teleport/idemeum teleport/teleport
 	mv teleport/install_teleport teleport/install
 	echo $(GITTAG) > teleport/VERSION
-	tar $(TAR_FLAGS) -c teleport | gzip -n > $(RELEASE).tar.gz
+	tar $(TAR_FLAGS) -c teleport | gzip -n > teleport-$(GITTAG)-$(OS)-$(ARCH)-bin.tar.gz
 	rm -rf teleport
-	@echo "---> Created $(RELEASE).tar.gz."
+	@echo "---> Created teleport-$(GITTAG)-$(OS)-$(ARCH)-bin.tar.gz."
 	@if [ -f e/Makefile ]; then \
 		rm -fr $(ASSETS_BUILDDIR)/webassets; \
 		$(MAKE) -C e release; \
