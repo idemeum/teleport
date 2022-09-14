@@ -271,7 +271,8 @@ type Config struct {
 	CircuitBreakerConfig breaker.Config
 
 	//Tenant Url
-	TenantUrl string
+	TenantUrl             string
+	IdemeumPresetsEnabled bool
 }
 
 // ApplyToken assigns a given token to all internal services but only if token

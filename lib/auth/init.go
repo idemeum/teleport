@@ -175,6 +175,10 @@ type InitConfig struct {
 
 	//App Publisher
 	AppPublisher publisher.AppPublisher
+
+	TenantUrl string
+	//Apply idemeum presets
+	IdemeumPresetsEnabled bool
 }
 
 // Init instantiates and configures an instance of AuthServer
@@ -403,6 +407,13 @@ func Init(cfg InitConfig, opts ...ServerOption) (*Server, error) {
 		return nil, trace.Wrap(err)
 	}
 
+	//create idemeum presets
+
+	err = createIdemeumPresets(asrv, cfg)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	if !cfg.SkipPeriodicOperations {
 		log.Infof("Auth server is running periodic operations.")
 		go asrv.runPeriodicOperations()
@@ -523,6 +534,46 @@ func createPresets(asrv *Server) error {
 			}
 		}
 	}
+	return nil
+}
+
+func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
+	if !cfg.IdemeumPresetsEnabled {
+		log.Infof("skipping idemeum presets for the tenant:%v", cfg.TenantUrl)
+		return nil
+	}
+
+	if cfg.TenantUrl == "" {
+		return trace.BadParameter("missing idemeum tenant url")
+	}
+
+	log.Infof("Applying idemeum presets for the tenant:%v", cfg.TenantUrl)
+
+	roles := []types.Role{
+		services.NewIdemeumAdminRole(),
+		services.NewIdemeumUserRole(),
+	}
+
+	ctx := context.Background()
+	for _, role := range roles {
+		err := asrv.UpsertRole(ctx, role)
+		if err != nil {
+			if !trace.IsAlreadyExists(err) {
+				return trace.WrapWithMessage(err, "failed to create preset role %v", role.GetName())
+			}
+		}
+	}
+
+	connector, err := services.NewIdemeumSamlConnector(cfg.TenantUrl)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	if err := asrv.Identity.UpsertSAMLConnector(ctx, connector); err != nil {
+		return trace.Wrap(err)
+	}
+
+	log.Infof("Applied idemeum presets for the tenant:%v", cfg.TenantUrl)
 	return nil
 }
 

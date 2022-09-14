@@ -1513,6 +1513,8 @@ func (process *TeleportProcess) initAuthService() error {
 		Emitter:                 checkingEmitter,
 		Streamer:                events.NewReportingStreamer(checkingStreamer, process.Config.UploadEventsC),
 		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
+		TenantUrl:               cfg.TenantUrl,
+		IdemeumPresetsEnabled:   cfg.IdemeumPresetsEnabled,
 	})
 	if err != nil {
 		return trace.Wrap(err)
