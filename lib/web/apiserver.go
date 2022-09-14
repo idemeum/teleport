@@ -475,9 +475,9 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 			return
 		}
 
-		// redirect to "/web" when someone hits "/"
-		if r.URL.Path == "/" {
-			http.Redirect(w, r, "/web", http.StatusFound)
+		// redirect to idemeum user portal if some one access / or /web/login
+		if r.URL.Path == "/" || strings.HasPrefix(r.URL.Path, "/web/login") {
+			http.Redirect(w, r, cfg.TenantUrl, http.StatusFound)
 			return
 		}
 
