@@ -447,6 +447,9 @@ func ApplyFileConfig(fc *FileConfig, cfg *service.Config) error {
 		cfg.TenantUrl = fc.TenantUrl
 	}
 
+	IdemeumPresetsEnabled, _ := apiutils.ParseBool(fc.IdemeumPresetsEnabled)
+	cfg.IdemeumPresetsEnabled = IdemeumPresetsEnabled
+
 	return nil
 }
 

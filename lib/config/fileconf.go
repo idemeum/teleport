@@ -87,6 +87,8 @@ type FileConfig struct {
 
 	//TenantUrl configures the tenant url for which the cluster is serving.
 	TenantUrl string `yaml:"tenant_url,omitempty"`
+
+	IdemeumPresetsEnabled string `yaml:"idemeum_presets_enabled,omitempty"`
 }
 
 // ReadFromFile reads Teleport configuration from a file. Currently only YAML
