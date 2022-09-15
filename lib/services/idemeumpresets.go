@@ -89,10 +89,11 @@ func idemeumRole(roleName string, admin bool) types.Role {
 				RecordSession:     &types.RecordSession{Desktop: types.NewBoolOption(true)},
 			},
 			Allow: types.RoleConditions{
-				Namespaces: []string{apidefaults.Namespace},
-				NodeLabels: types.Labels{"idemeum_app_id": []string{"{{external.node_ids}}"}},
-				AppLabels:  types.Labels{"idemeum_app_id": []string{"{{external.app_ids}}"}},
-				Rules:      getRoleRules(admin),
+				Namespaces:          []string{apidefaults.Namespace},
+				NodeLabels:          types.Labels{"idemeum_app_id": []string{"{{external.node_ids}}"}},
+				AppLabels:           types.Labels{"idemeum_app_id": []string{"{{external.app_ids}}"}},
+				Rules:               getRoleRules(admin),
+				IdemeumEntitlements: []string{"{{external.idemeum_entitlements}}"},
 			},
 		},
 	}
