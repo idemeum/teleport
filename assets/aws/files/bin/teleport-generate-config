@@ -207,6 +207,14 @@ else
     PUBLIC_IP=$(aws_metadata_get PUBLIC_IP)
 fi
 
+if [[ "${TELEPORT_AUTH_SERVER_LB}" == "DEFAULT" ]]; then
+    TELEPORT_AUTH_SERVER_LB=${LOCAL_IP}
+fi
+
+if [[ "${TELEPORT_PROXY_SERVER_LB}" == "DEFAULT" ]]; then
+    TELEPORT_PROXY_SERVER_LB=${PUBLIC_IP}
+fi
+
 # If the teleport user and adm group exist, create /var/lib/teleport if it doesn't exist
 # and fix permissions appropriately
 if getent passwd teleport >/dev/null 2>&1 && getent group adm >/dev/null 2>&1; then
@@ -266,7 +274,6 @@ auth_service:
     enabled: true
   app_publisher_config:
     enabled: true
-  proxy_listener_mode: multiplex
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
@@ -299,7 +306,7 @@ elif [[ "${TELEPORT_ROLE}" == "proxy" ]]; then
         TUNNEL_LISTEN_PORT=3024
     else
         echo "proxy" > ${USE_CONFD_DIR}/role.proxy
-        TUNNEL_LISTEN_PORT=3080
+        TUNNEL_LISTEN_PORT=${TELEPORT_INTERNAL_PORT:-3080}
     fi
     # Teleport proxy proxies and optionally records
     # SSH sessions
@@ -336,7 +343,7 @@ proxy_service:
   enabled: yes
   listen_addr: 0.0.0.0:3023
   tunnel_listen_addr: 0.0.0.0:${TUNNEL_LISTEN_PORT}
-  web_listen_addr: 0.0.0.0:3080
+  web_listen_addr: 0.0.0.0:${TELEPORT_INTERNAL_PORT:-3080}
   public_addr: ${TELEPORT_DOMAIN_NAME}:443
 EOF
 
@@ -425,7 +432,7 @@ elif [[ "${TELEPORT_ROLE}" == "auth,node,proxy" ]]; then
     else
         rm -f ${USE_CONFD_DIR}/role.all-acm
         echo "all" > ${USE_CONFD_DIR}/role.all
-        TUNNEL_LISTEN_PORT=3080
+        TUNNEL_LISTEN_PORT=${TELEPORT_INTERNAL_PORT:-3080}
     fi
 
     cat >${USE_CONFIG_PATH} <<EOF
@@ -451,6 +458,7 @@ EOF
     table_name: ${TELEPORT_DYNAMO_TABLE_NAME}
     audit_events_uri: dynamodb://${TELEPORT_DYNAMO_EVENTS_TABLE_NAME}
     audit_sessions_uri: s3://${TELEPORT_S3_BUCKET}/records
+    audit_retention_period: ${AUDIT_RETENTION_DAYS:-365}d
 EOF
     else
         echo "Missing DynamoDB settings, using local dir storage."
@@ -477,7 +485,6 @@ auth_service:
     enabled: true
   app_publisher_config:
     enabled: true
-  proxy_listener_mode: multiplex
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
@@ -498,12 +505,12 @@ proxy_service:
   enabled: yes
   listen_addr: 0.0.0.0:3023
   tunnel_listen_addr: 0.0.0.0:${TUNNEL_LISTEN_PORT}
-  web_listen_addr: 0.0.0.0:3080
+  web_listen_addr: 0.0.0.0:${TELEPORT_INTERNAL_PORT:-3080}
   public_addr: ${TELEPORT_EXTERNAL_HOSTNAME:-$PUBLIC_IP}:${TELEPORT_EXTERNAL_PORT:-3080}
 EOF
 
     # write ssh/tunnel config
-    write_ssh_and_tunnel_section 3080
+    write_ssh_and_tunnel_section ${TELEPORT_INTERNAL_PORT:-3080}
 
     # if we are using letsencrypt, append config lines
     if [[ "${USE_LETSENCRYPT}" == "true" ]]; then
@@ -559,7 +566,7 @@ else
     else
         rm -f ${USE_CONFD_DIR}/role.all-acm
         echo "all" > ${USE_CONFD_DIR}/role.all
-        TUNNEL_LISTEN_PORT=3080
+        TUNNEL_LISTEN_PORT=${TELEPORT_INTERNAL_PORT:-3080}
     fi
 
     cat >${USE_CONFIG_PATH} <<EOF
@@ -590,7 +597,6 @@ auth_service:
     enabled: true
   app_publisher_config:
     enabled: true
-  proxy_listener_mode: multiplex
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 
 ssh_service:
@@ -600,13 +606,13 @@ ssh_service:
 proxy_service:
   enabled: yes
   listen_addr: 0.0.0.0:3023
-  tunnel_listen_addr: 0.0.0.0:${TUNNEL_LISTEN_PORT}
-  web_listen_addr: 0.0.0.0:3080
+  tunnel_listen_addr: 0.0.0.0:${TELEPORT_INTERNAL_PORT:-$TUNNEL_LISTEN_PORT}
+  web_listen_addr: 0.0.0.0:${TELEPORT_INTERNAL_PORT:-3080}
   public_addr: ${TELEPORT_EXTERNAL_HOSTNAME:-$PUBLIC_IP}:${TELEPORT_EXTERNAL_PORT:-3080}
 EOF
 
     # write ssh/tunnel config
-    write_ssh_and_tunnel_section 3080
+    write_ssh_and_tunnel_section ${TELEPORT_INTERNAL_PORT:-3080}
     
     # set up the database listeners
     write_database_section TELEPORT_EXTERNAL_HOSTNAME
