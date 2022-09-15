@@ -569,8 +569,15 @@ func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
 		return trace.Wrap(err)
 	}
 
-	if err := asrv.Identity.UpsertSAMLConnector(ctx, connector); err != nil {
-		return trace.Wrap(err)
+	// saml connector config rarely changes,
+	// skip the updating of saml connector everytime the serves comes up
+	_, err = asrv.Identity.GetSAMLConnector(ctx, connector.GetName(), false)
+	if err != nil {
+		if err := asrv.Identity.UpsertSAMLConnector(ctx, connector); err != nil {
+			return trace.Wrap(err)
+		}
+	} else {
+		log.Infof("skipping saml connector update as its exists")
 	}
 
 	log.Infof("Applied idemeum presets for the tenant:%v", cfg.TenantUrl)
