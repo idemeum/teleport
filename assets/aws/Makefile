@@ -1,8 +1,9 @@
+AWS_PROFILE ?= stg
 # VPC ID used for builds
-BUILD_VPC_ID ?=
+BUILD_VPC_ID ?= vpc-0cc411083f96ee0a6
 
 # VPC subnet used for builds
-BUILD_SUBNET_ID ?=
+BUILD_SUBNET_ID ?= subnet-04af8faae5c9a92e6
 
 # Public AMI name
 PUBLIC_AMI_NAME ?=
@@ -14,7 +15,7 @@ AWS_REGION ?= us-west-2
 # This must be a _released_ version of Teleport, i.e. one which has binaries
 # available for download on https://gravitational.com/teleport/download
 # Unreleased versions will fail to build.
-TELEPORT_VERSION ?= 9.3.5
+TELEPORT_VERSION ?= 1.0.0
 
 # Teleport UID is the UID of a non-privileged 'teleport' user
 TELEPORT_UID ?= 1007
@@ -26,7 +27,7 @@ INSTANCE_TYPE ?= t2.medium
 # For now, limit AMI publishing to non opt-in regions
 # https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
 # You can get this with $(AWS_DEFAULT_REGION=us-west-2 aws ec2 describe-regions | jq -r '.Regions | map(.RegionName) | join(",")')
-DESTINATION_REGIONS ?= eu-north-1,ap-south-1,eu-west-3,eu-west-2,eu-west-1,ap-northeast-3,ap-northeast-2,ap-northeast-1,sa-east-1,ca-central-1,ap-southeast-1,ap-southeast-2,eu-central-1,us-east-1,us-east-2,us-west-1,us-west-2
+DESTINATION_REGIONS ?= ap-south-1,us-west-2
 
 # Generate timestamp for builds
 BUILD_TIMESTAMP := $(shell TZ=UTC /bin/date "+%Y%m%d-%H%M%S%Z")
@@ -41,7 +42,7 @@ INFLUXDB_VERSION ?= 1.8.5
 GRAFANA_VERSION ?= 5.4.3
 
 # AWS account ID which hosts the public Teleport AMIs
-AWS_ACCOUNT_ID ?= 126027368216
+AWS_ACCOUNT_ID ?= 677677494434
 export
 
 

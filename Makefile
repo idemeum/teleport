@@ -324,6 +324,7 @@ clean:
 	rm -rf $(RS_BPF_BUILDDIR)
 	-cargo clean
 	-go clean -cache
+	rm -rf teleport
 	rm -rf idemeum
 	rm -rf *.gz
 	rm -rf *.zip
@@ -366,7 +367,7 @@ release-arm64:
 #
 .PHONY:
 release-unix: clean full
-	@echo "---> Creating OSS release archive."
+	@echo "---> Creating OSS release archive. [idemeum]"
 	mkdir idemeum
 	cp -rf $(BUILDDIR)/idemeum \
 		build.assets/install\
@@ -384,6 +385,24 @@ release-unix: clean full
 		$(MAKE) -C e release; \
 	fi
 
+	@echo "---> Creating OSS release archive. [teleport]"
+	mkdir teleport
+	cp -rf $(BUILDDIR)/* \
+		examples \
+		build.assets/install_teleport\
+		README.md \
+		CHANGELOG.md \
+		teleport/
+	mv teleport/idemeum teleport/teleport
+	mv teleport/install_teleport teleport/install
+	echo $(GITTAG) > teleport/VERSION
+	tar $(TAR_FLAGS) -c teleport | gzip -n > teleport-$(GITTAG)-$(OS)-$(ARCH)-bin.tar.gz
+	rm -rf teleport
+	@echo "---> Created teleport-$(GITTAG)-$(OS)-$(ARCH)-bin.tar.gz."
+	@if [ -f e/Makefile ]; then \
+		rm -fr $(ASSETS_BUILDDIR)/webassets; \
+		$(MAKE) -C e release; \
+	fi
 #
 # make release-windows-unsigned - Produces a binary release archive containing only tsh.
 #
