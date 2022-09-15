@@ -563,7 +563,6 @@ func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
 			}
 		}
 	}
-	}
 
 	connector, err := services.NewIdemeumSamlConnector(cfg.TenantUrl)
 	if err != nil {
