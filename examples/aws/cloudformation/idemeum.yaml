@@ -44,9 +44,9 @@ Mappings:
 
   VersionConfig:
     1.0.0:
-      GitHash: 611c7f012
-      APSOUTH1: ami-0010544fb1b0123f2
-      USAWEST2: ami-0010544fb1b0123f2
+      GitHash: 2241f87cf
+      APSOUTH1: ami-0ec67e26b9e7793fa
+      USAWEST2: ami-064060f866eff3876
 
   DeploymentTypeConfig:
     LA-Starter:
@@ -392,8 +392,8 @@ Resources:
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           Description: Port for HTTPS connections
-          FromPort: !if [HighAvailablity, '3080', '443']
-          ToPort: !if [HighAvailablity, '3080', '443']
+          FromPort: !If [HighAvailablity, '3080', '443']
+          ToPort: !If [HighAvailablity, '3080', '443']
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: "-1"
@@ -430,41 +430,21 @@ Resources:
         - Key: VantaOwner
           Value: goprean@idemeum.com
 
-  # Create A DNS entry pointing to load balancer
   ProxyDNS:
     Type: AWS::Route53::RecordSetGroup
-    Condition: HighAvailablity
     Properties:
       HostedZoneId: '{{resolve:ssm:/Services/Route53/RemoteAccessHostedZoneID}}'
       Comment: Zone Alias for DNS
       RecordSets:
       - Name: !Join [".", [!Ref TenantName, "remote", !Ref IdemeumDomain]]
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt ProxyLB.CanonicalHostedZoneID
-          DNSName: !GetAtt ProxyLB.DNSName
-      - Name: !Join [".", ["*", !Ref TenantName, "remote", !Ref IdemeumDomain]]
-        Type: A
-        AliasTarget:
-          HostedZoneId: !GetAtt ProxyLB.CanonicalHostedZoneID
-          DNSName: !GetAtt ProxyLB.DNSName
-
-  ProxyDNS:
-    Type: AWS::Route53::RecordSetGroup
-    Condition: LowAvailablity
-    Properties:
-      HostedZoneId: '{{resolve:ssm:/Services/Route53/RemoteAccessHostedZoneID}}'
-      Comment: Zone Alias for DNS
-      RecordSets:
-      - Name: !Join [".", [!Ref TenantName, "remote", !Ref IdemeumDomain]]
-        Type: A
+        Type: !If [HighAvailablity, 'CNAME', 'A']
         ResourceRecords:
-        - !GetAtt ProxyEc2Instance.PublicIp
+        - !If [HighAvailablity, !GetAtt ProxyLB.DNSName, !GetAtt ProxyEc2Instance.PublicIp]
         TTL: 60
       - Name: !Join [".", ["*", !Ref TenantName, "remote", !Ref IdemeumDomain]]
-        Type: A
+        Type: !If [HighAvailablity, 'CNAME', 'A']
         ResourceRecords:
-        - !GetAtt ProxyEc2Instance.PublicIp
+        - !If [HighAvailablity, !GetAtt ProxyLB.DNSName, !GetAtt ProxyEc2Instance.PublicIp]
         TTL: 60
 
   ProxyLBListener:
