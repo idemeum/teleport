@@ -140,7 +140,6 @@ Resources:
             TELEPORT_LOCKS_TABLE_NAME=${LocalLocksTableName}
             TELEPORT_S3_BUCKET=${LocalBucketName}
             TELEPORT_ROLE=auth
-            TELEPORT_SSM_KEY_ARN=${LocalKeyARN}
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             AUDIT_RETENTION_DAYS=61
@@ -185,8 +184,7 @@ Resources:
             LocalMainTableName: !Select [1, !Split ["/", !GetAtt MainTable.Arn]],
             LocalLocksTableName: !Select [1, !Split ["/", !GetAtt LocksTable.Arn]],
             LocalEventsTableName: !Select [1, !Split ["/", !GetAtt EventsTable.Arn]],
-            LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]],
-            LocalKeyARN: !GetAtt Key.Arn
+            LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]]
             }
       Tags:
         - Key: Name
@@ -229,7 +227,6 @@ Resources:
             TELEPORT_LOCKS_TABLE_NAME=${LocalLocksTableName}
             TELEPORT_S3_BUCKET=${LocalBucketName}
             TELEPORT_ROLE=auth
-            TELEPORT_SSM_KEY_ARN=${LocalKeyARN}
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             AUDIT_RETENTION_DAYS=61
@@ -275,8 +272,7 @@ Resources:
             LocalMainTableName: !Select [1, !Split ["/", !GetAtt MainTable.Arn]],
             LocalLocksTableName: !Select [1, !Split ["/", !GetAtt LocksTable.Arn]],
             LocalEventsTableName: !Select [1, !Split ["/", !GetAtt EventsTable.Arn]],
-            LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]],
-            LocalKeyARN: !GetAtt Key.Arn
+            LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]]
             }
       SecurityGroups:
         - Ref: AuthSecurityGroup
@@ -490,7 +486,7 @@ Resources:
           DeviceIndex: "0"
           GroupSet:
             - Ref: ProxySecurityGroup
-          SubnetId: '{{resolve:ssm:/Services/VPC/PrivateSubnetAZ1}}'
+          SubnetId: '{{resolve:ssm:/Services/VPC/PublicSubnetAZ1}}'
       UserData:
         Fn::Base64:
           # Fn:Sub accepts two parameters as a list, the first one is the template
@@ -511,7 +507,6 @@ Resources:
             TELEPORT_PROXY_SERVER_LB=DEFAULT
             TELEPORT_ROLE=proxy
             TELEPORT_S3_BUCKET=${LocalBucketName}
-            TELEPORT_SSM_KEY_ARN=${LocalKeyARN}
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             MAX_CONNECTIONS=${MaxConnections}
@@ -555,7 +550,6 @@ Resources:
             DomainName: !Join [".", [!Ref TenantName, "remote", !Ref IdemeumDomain]],
             Tenant: !Join [".", [!Ref TenantName, !Ref IdemeumDomain]],
             LocalAuthServerAddress: !GetAtt  AuthEc2Instance.PrivateIp,
-            LocalKeyARN: !GetAtt Key.Arn,
             LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]],
             MaxConnections: !FindInMap [DeploymentTypeConfig, !Ref DeploymentType, MaxConns],
             MaxUsers: !FindInMap [DeploymentTypeConfig, !Ref DeploymentType, MaxUsers]
@@ -598,7 +592,6 @@ Resources:
             TELEPORT_PROXY_SERVER_LB=${LocalProxyServerLB}
             TELEPORT_ROLE=proxy
             TELEPORT_S3_BUCKET=${LocalBucketName}
-            TELEPORT_SSM_KEY_ARN=${LocalKeyARN}
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             MAX_CONNECTIONS=${MaxConnections}
@@ -642,7 +635,6 @@ Resources:
             Tenant: !Join [".", [!Ref TenantName, !Ref IdemeumDomain]],
             LocalAuthServerLB: !GetAtt AuthLB.DNSName,
             LocalProxyServerLB: !GetAtt ProxyLB.DNSName,
-            LocalKeyARN: !GetAtt Key.Arn,
             LocalBucketName: !Select [1, !Split [":::", !GetAtt Bucket.Arn]],
             MaxConnections: !FindInMap [DeploymentTypeConfig, !Ref DeploymentType, MaxConns],
             MaxUsers: !FindInMap [DeploymentTypeConfig, !Ref DeploymentType, MaxUsers]
@@ -960,55 +952,6 @@ Resources:
     Properties:
       Roles:
       - {Ref: ProxyRole}
-
-  Key:
-    Type: "AWS::KMS::Key"
-    Properties:
-      Description: "SSM Key used by Remote Access Services"
-      EnableKeyRotation: True
-      KeyPolicy:
-        Version: "2012-10-17"
-        Id: !Join ["-", ["key-remote-access", !Ref TenantName]]
-        Statement:
-          - Sid: "Allow administration of the key"
-            Effect: "Allow"
-            Principal:
-              AWS: !Join ["", ["arn:aws:sts::", !Ref "AWS::AccountId", ":root"]]
-            Action:
-            - "kms:Create*"
-            - "kms:Describe*"
-            - "kms:Enable*"
-            - "kms:List*"
-            - "kms:Put*"
-            - "kms:Update*"
-            - "kms:Revoke*"
-            - "kms:Disable*"
-            - "kms:Get*"
-            - "kms:Delete*"
-            - "kms:ScheduleKeyDeletion"
-            - "kms:CancelKeyDeletion"
-            Resource: "*"
-          - Sid: "Allow auth use of the key"
-            Effect: "Allow"
-            Principal:
-              AWS: !GetAtt AuthRole.Arn
-            Action:
-              - "kms:Encrypt"
-              - "kms:Decrypt"
-              - "kms:ReEncrypt*"
-              - "kms:GenerateDataKey*"
-              - "kms:DescribeKey"
-            Resource: "*"
-
-          -
-            Sid: "Allow proxy use of the key"
-            Effect: "Allow"
-            Principal:
-              AWS: !GetAtt ProxyRole.Arn
-            Action:
-              - "kms:Decrypt"
-              - "kms:DescribeKey"
-            Resource: "*"
 
 
   # MainTable is a main dynamodb table
