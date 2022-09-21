@@ -13,7 +13,7 @@ Parameters:
   IdemeumDomain:
     Description: Idemeum domain name
     Type: String
-    Default: idemeumlab.com
+    Default: idemeum.com
     AllowedValues:
     - idemeumlab.com
     - idemeum.com
@@ -25,6 +25,9 @@ Parameters:
     Default: LA-Starter
     AllowedValues:
     - LA-Starter
+    - LA-MICRO
+    - LA-SMALL
+    - LA-MEDIUM
     - HA-MICRO
     - HA-SMALL
     - HA-MEDIUM
@@ -35,6 +38,19 @@ Parameters:
     Default: 1.0.0
     AllowedValues:
     - 1.0.0
+
+  Mode:
+    Description: Allows deactivation of stack that would shut down compute and load balancers
+    Type: String
+    Default: Active
+    AllowedValues:
+    - Active
+    - Inactive
+
+  EventsRetentionDays:
+    Description: Number of days to keep audit events
+    Type: Number
+    Default: 365
 
 Mappings:
 
@@ -54,31 +70,48 @@ Mappings:
       ProxyType: t3a.nano
       MaxConns: 100
       MaxUsers: 50
+    LA-MICRO:
+      AuthType: t3a.micro
+      ProxyType: t3a.micro
+      MaxConns: 250
+      MaxUsers: 150
+    LA-SMALL:
+      AuthType: t3a.small
+      ProxyType: t3a.small
+      MaxConns: 500
+      MaxUsers: 300
+    LA-MEDIUM:
+      AuthType: t3a.medium
+      ProxyType: t3a.medium
+      MaxConns: 1000
+      MaxUsers: 800
     HA-MICRO:
       AuthType: t3a.micro
       ProxyType: t3a.micro
       MaxConns: 400
-      MaxUsers: 200
+      MaxUsers: 250
     HA-SMALL:
       AuthType: t3a.small
       ProxyType: t3a.small
       MaxConns: 1000
-      MaxUsers: 500
+      MaxUsers: 750
     HA-MEDIUM:
       AuthType: t3a.medium
       ProxyType: t3a.medium
-      MaxConns: 3000
+      MaxConns: 2500
       MaxUsers: 1500
 
 
 Conditions:
-  HighAvailablity: !Equals [ !Select [ 0, !Split [ "-", !Ref DeploymentType ]], "HA" ]
-  LowAvailablity: !Equals [ !Select [ 0, !Split [ "-", !Ref DeploymentType ]], "LA" ]
+  HighAvailablity: !And [!Equals [ !Select [ 0, !Split [ "-", !Ref DeploymentType ]], "HA" ], !Equals [!Ref Mode, 'Active'] ]
+  LowAvailablity:  !And [!Equals [ !Select [ 0, !Split [ "-", !Ref DeploymentType ]], "LA" ], !Equals [!Ref Mode, 'Active'] ]
+  ModeActive: !Equals [!Ref Mode, 'Active']
 
 Resources:
 # Auth server setup
   AuthSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Condition: ModeActive
     Properties:
       GroupName: !Join [" ", ["Remote Access ", !Ref TenantName, " AuthSecurityGroup"]]
       GroupDescription: Remote Access - Allow proxy and auth server access
@@ -142,7 +175,7 @@ Resources:
             TELEPORT_ROLE=auth
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
-            AUDIT_RETENTION_DAYS=61
+            AUDIT_RETENTION_DAYS=${EventsRetentionDays}
             EOF
 
             # Generate config and start proxy service
@@ -229,7 +262,7 @@ Resources:
             TELEPORT_ROLE=auth
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
-            AUDIT_RETENTION_DAYS=61
+            AUDIT_RETENTION_DAYS=${EventsRetentionDays}
             EOF
 
             # Generate config and start proxy service
@@ -376,6 +409,7 @@ Resources:
   #
   ProxySecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Condition: ModeActive
     Properties:
       GroupName: !Join [" ", ["Remote Access ", !Ref TenantName, " ProxySecurityGroup"]]
       GroupDescription: Remote Access - Allow proxy and auth server access
@@ -428,6 +462,7 @@ Resources:
 
   ProxyDNS:
     Type: AWS::Route53::RecordSetGroup
+    Condition: ModeActive
     Properties:
       HostedZoneId: '{{resolve:ssm:/Services/Route53/RemoteAccessHostedZoneID}}'
       Comment: Zone Alias for DNS
@@ -694,6 +729,7 @@ Resources:
 
   AuthRole:
     Type: AWS::IAM::Role
+    Condition: ModeActive
     Properties:
       RoleName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'AuthRole']]
       AssumeRolePolicyDocument:
@@ -712,6 +748,7 @@ Resources:
   # to SSM parameter store
   AuthPolicies:
     Type: AWS::IAM::Policy
+    Condition: ModeActive
     Properties:
       PolicyName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'AuthRole', 'ssm']]
       PolicyDocument:
@@ -875,12 +912,14 @@ Resources:
 
   AuthInstanceProfile:
     Type: AWS::IAM::InstanceProfile
+    Condition: ModeActive
     Properties:
       Roles:
       - {Ref: AuthRole}
 
   ProxyRole:
     Type: AWS::IAM::Role
+    Condition: ModeActive
     Properties:
       RoleName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'ProxyRole']]
       AssumeRolePolicyDocument:
@@ -900,6 +939,7 @@ Resources:
   # And read certs from encrypted S3 bucket
   ProxyPolicies:
     Type: AWS::IAM::Policy
+    Condition: ModeActive
     Properties:
       PolicyName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'ProxyRole', 'ssm']]
       PolicyDocument:
@@ -949,6 +989,7 @@ Resources:
 
   ProxyInstanceProfile:
     Type: AWS::IAM::InstanceProfile
+    Condition: ModeActive
     Properties:
       Roles:
       - {Ref: ProxyRole}
@@ -997,7 +1038,7 @@ Resources:
   # trying to renew and manage letsencrypt certificate
   LocksTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
+    DeletionPolicy: Delete
     Properties:
       TableName: !Join ["_", [RemoteAccessLocks, !Ref TenantName]]
       BillingMode: PAY_PER_REQUEST
