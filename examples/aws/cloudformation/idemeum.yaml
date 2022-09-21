@@ -957,7 +957,7 @@ Resources:
   # MainTable is a main dynamodb table
   # where teleport stores all relevant state
   MainTable:
-    Type: AWS::DynamoDB::GlobalTable
+    Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
       TableName: !Join ["_", [RemoteAccessMain, !Ref TenantName]]
@@ -979,17 +979,24 @@ Resources:
         Enabled: true
       StreamSpecification:
         StreamViewType: NEW_IMAGE
-      Replicas:
-        - Region: !Ref AWS::Region
-          PointInTimeRecoverySpecification:
-            PointInTimeRecoveryEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+        - Key: TenantName
+          Value: !Ref TenantName
+        - Key: VantaDescription
+          Value: !Join [" ", ["Remote Access ", !Ref TenantName, " -  Main Table"]]
+        - Key: VantaOwner
+          Value: goprean@idemeum.com
 
 
   # LocksTable is a dynamodb table that is
   # used as a distributed lock between auth servers
   # trying to renew and manage letsencrypt certificate
   LocksTable:
-    Type: AWS::DynamoDB::GlobalTable
+    Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
       TableName: !Join ["_", [RemoteAccessLocks, !Ref TenantName]]
@@ -1005,11 +1012,20 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: Expires
         Enabled: true
-      Replicas:
-        - Region: !Ref AWS::Region
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+        - Key: TenantName
+          Value: !Ref TenantName
+        - Key: VantaDescription
+          Value: !Join [" ", ["Remote Access ", !Ref TenantName, " -  Locks Table"]]
+        - Key: VantaOwner
+          Value: goprean@idemeum.com
 
   EventsTable:
-    Type: AWS::DynamoDB::GlobalTable
+    Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
       TableName: !Join ["_", [RemoteAccessEvents, !Ref TenantName]]
@@ -1042,11 +1058,17 @@ Resources:
           KeyType: RANGE
         Projection:
           ProjectionType: ALL
-      Replicas:
-        - Region: !Ref AWS::Region
-          PointInTimeRecoverySpecification:
-            PointInTimeRecoveryEnabled: true
-
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+        - Key: TenantName
+          Value: !Ref TenantName
+        - Key: VantaDescription
+          Value: !Join [" ", ["Remote Access ", !Ref TenantName, " - Events Table"]]
+        - Key: VantaOwner
+          Value: goprean@idemeum.com
   # Bucket is used to publish letsencrypt certs
   # and store recorded SSH sessions
   Bucket:
@@ -1059,7 +1081,15 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
         - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
-
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+        - Key: TenantName
+          Value: !Ref TenantName
+        - Key: VantaDescription
+          Value: !Join [" ", ["Remote Access ", !Ref TenantName, " -  S3 bucket for certs and recordings"]]
+        - Key: VantaOwner
+          Value: goprean@idemeum.com
 Outputs:
   DeploymentType:
     Value: !Ref DeploymentType
