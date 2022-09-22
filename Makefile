@@ -371,9 +371,11 @@ release-unix: clean full
 	mkdir idemeum
 	cp -rf $(BUILDDIR)/idemeum \
 		build.assets/install\
+		examples/systemd/agent-setup\
 		idemeum/
 	mkdir idemeum/systemd	
 	cp -f examples/systemd/idemeum.service idemeum/systemd/idemeum.service
+	cp -f examples/systemd/idemeum-agent.service idemeum/systemd/idemeum-agent.service
 	cp -f examples/systemd/README.md idemeum/systemd/README.md
 	cp -f examples/idemeum-readme.md idemeum/README.md
 	echo $(GITTAG) > idemeum/VERSION

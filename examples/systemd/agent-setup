@@ -1,0 +1,24 @@
+#!/bin/bash
+
+filename="systemd/idemeum-agent.service"
+agentName=$1
+agentServiceFileName=$agentName.service
+sed -e "s/{AGENT_NAME}/$agentName/" $filename > $agentServiceFileName
+
+echo "Copying $agentServiceFileName to /etc/systemd/system/$agentServiceFileName"
+sudo cp $agentServiceFileName /etc/systemd/system/$agentServiceFileName
+sudo systemctl daemon-reload
+sudo systemctl enable $agentName
+echo "set up completed for $agentName systemd service"
+
+echo "**********************  COPY agent file ***************"
+echo "NOTE: Copy the agent yaml file to /etc/$agentName.yaml"
+echo "*******************************************************"
+echo ""
+echo "***********************  Agent commands ***************"
+echo "systemctl start|stop|status $agentName"
+echo "*******************************************************"
+echo ""
+echo "***********************  Agent logs *******************"
+echo "journalctl -fu $agentName"
+echo "*******************************************************"

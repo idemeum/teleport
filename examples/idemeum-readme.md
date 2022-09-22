@@ -1,4 +1,4 @@
-# Install and running idemeum agent
+# Install agent
 
 To install idemeum agent:
 
@@ -6,6 +6,17 @@ To install idemeum agent:
 sudo ./install
 ```
 
+## To run the agent as systemd service
+To run the idemeum agent with the downloaded yaml config file:
+
+```bash 
+sudo ./agent-setup <agentName>
+```
+
+Copy the downloaded agent config to /etc/<agentName>.yaml
+
+
+## To run the agent using command
 To run the idemeum agent with the downloaded yaml config file:
 
 ```bash
