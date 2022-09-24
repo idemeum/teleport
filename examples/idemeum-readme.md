@@ -10,17 +10,7 @@ sudo ./install
 To run the idemeum agent with the downloaded yaml config file:
 
 ```bash 
-sudo ./agent-setup <agentName>
-```
-
-Copy the downloaded agent config to /etc/<agentName>.yaml
-
-
-## To run the agent using command
-To run the idemeum agent with the downloaded yaml config file:
-
-```bash
-idemeum start --config= <yaml_config_file_path>
+sudo ./agent-setup <agentName> </path/to/download-config.yaml>
 ```
 
 # More details
