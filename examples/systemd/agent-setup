@@ -1,24 +1,92 @@
-#!/bin/bash
+!/bin/bash
+# Usage : bash
+AGENT_NAME=$1
+CONFIG_FILE=$2
+echo "[Usage] bash agent-setup <agent-name> <path-to-yaml-config>"
+echo ""
+while ! [[ "${AGENT_NAME}" =~ ^[a-zA-Z0-9_]{3,20}$ ]]
+do
+  if [ ! -z "$AGENT_NAME" ]; then
+    echo "[Error] Invalid agent name : ${AGENT_NAME}"
+  else
+    echo "[Error] Agent name not provided."
+  fi
+  echo "  Enter valid agent name."
+  echo "  Only alphanumeric charaters allowed & lenght 3-20."
+  read -p  "[Input Agent Name] : " AGENT_NAME
+done
 
-filename="systemd/idemeum-agent.service"
-agentName=$1
-agentServiceFileName=$agentName.service
-sed -e "s/{AGENT_NAME}/$agentName/" $filename > $agentServiceFileName
+while [ ! -f "${CONFIG_FILE}" ]
+do
+  if [ ! -z "$CONFIG_FILE" ]; then
+    echo "[Error] Invalid agent config file : ${CONFIG_FILE}"
+  else
+    echo "[Error] Agent config file not provided."
+  fi
+  echo "  Enter config file path."
+  read -p  "[Input Agent Config] : " CONFIG_FILE
+done
 
-echo "Copying $agentServiceFileName to /etc/systemd/system/$agentServiceFileName"
-sudo cp $agentServiceFileName /etc/systemd/system/$agentServiceFileName
+echo ""
+echo "*****************  Installing Agent *******************"
+echo "Agent name : ${AGENT_NAME}"
+echo ""
+
+AGENT_SERVICE_CONFIG="/etc/systemd/system/${AGENT_NAME}.service"
+AGENT_CONFIG_FILE="/etc/${AGENT_NAME}.yaml"
+
+if test -f "${AGENT_SERVICE_CONFIG}"; then
+    echo "[Error] Service with same name is already installed. [$AGENT_SERVICE_CONFIG]"
+    exit 1
+fi
+
+if test -f "${AGENT_CONFIG_FILE}"; then
+    echo "[Error] Agent config with same name already exists. [$AGENT_CONFIG_FILE]"
+    exit 1
+fi
+
+echo ""
+echo "[sudo] Writing agent service : ${AGENT_SERVICE_CONFIG}"
+sudo cat << EOS >> ${AGENT_SERVICE_CONFIG}
+[Unit]
+Description=Idemeum remote access agent service : ${AGENT_NAME}
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+EnvironmentFile=-/etc/default/idemeum
+ExecStart=/usr/local/bin/idemeum start --pid-file=/run/${AGENT_NAME}.pid --config=${AGENT_CONFIG_FILE}
+ExecReload=/bin/kill -HUP \$MAINPID
+PIDFile=/run/${AGENT_NAME}.pid
+LimitNOFILE=8192
+
+[Install]
+WantedBy=multi-user.target
+EOS
+
+echo "[sudo] Copying agent config : ${CONFIG_FILE} -> ${AGENT_CONFIG_FILE}"
+sudo cp  $CONFIG_FILE $AGENT_CONFIG_FILE
+
+echo "[info] Using `cat ${AGENT_CONFIG_FILE} | grep data_dir`"
+echo ""
+echo "[sudo] Reloading systemctl daemons."
 sudo systemctl daemon-reload
-sudo systemctl enable $agentName
-echo "set up completed for $agentName systemd service"
-
-echo "**********************  COPY agent file ***************"
-echo "NOTE: Copy the agent yaml file to /etc/$agentName.yaml"
-echo "*******************************************************"
+echo ""
+echo "[sudo] Enabling service : $AGENT_NAME"
+sudo systemctl enable "$AGENT_NAME.service"
+echo ""
+echo "[sudo] Starting agent ....."
+sudo systemctl start $AGENT_NAME
+echo ""
+echo "[sudo] checking agent status agent ....."
+sudo systemctl status $AGENT_NAME
+echo ""
 echo ""
 echo "***********************  Agent commands ***************"
-echo "systemctl start|stop|status $agentName"
+echo "sudo systemctl start|stop|status|restart ${AGENT_NAME}"
 echo "*******************************************************"
 echo ""
 echo "***********************  Agent logs *******************"
-echo "journalctl -fu $agentName"
+echo "sudo journalctl -fu ${AGENT_NAME}"
 echo "*******************************************************"
