@@ -25,22 +25,26 @@ type IdemeumClaims struct {
 	Issuer     string              `json:"iss,omitempty"`
 	NotBefore  int64               `json:"nbf,omitempty"`
 	Subject    string              `json:"sub,omitempty"`
+	Email      string              `json:"email,omitempty"`
 	Roles      []string            `json:"roles,omitempty"`
 	Traits     map[string][]string `json:"traits,omitempty"`
 	SessionTTL int64               `json:"sessionTTL,omitempty"`
 }
 
 func ValidateJwtToken(ServiceToken string, TenantUrl string) (*IdemeumClaims, error) {
-	//Token Validation
-	key, err := loadPublicKey(TenantUrl + "/.well-known/jwks.json")
+	publicKey, err := loadPublicKey(TenantUrl + "/.well-known/jwks.json")
 	if err != nil {
 		log.Printf("Failed to load public key for tenant :%v \n", TenantUrl)
 		return nil, trace.BadParameter("invalid configuration")
 	}
+	return validateJwtToken(ServiceToken, TenantUrl, TenantUrl, publicKey)
+}
+
+func validateJwtToken(Token string, Issuer string, Audience string, PublicKey *ecdsa.PublicKey) (*IdemeumClaims, error) {
 
 	parser := &jwt.Parser{SkipClaimsValidation: true}
-	token, err := parser.ParseWithClaims(ServiceToken, &IdemeumClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return key, nil
+	token, err := parser.ParseWithClaims(Token, &IdemeumClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return PublicKey, nil
 	})
 
 	if err != nil {
@@ -60,11 +64,11 @@ func ValidateJwtToken(ServiceToken string, TenantUrl string) (*IdemeumClaims, er
 		return nil, trace.BadParameter("token invalid")
 	}
 
-	if !claims.VerifyIssuer(TenantUrl, true) {
+	if !claims.VerifyIssuer(Issuer, true) {
 		return nil, trace.BadParameter("token invalid Issuer")
 	}
 
-	if !claims.VerifyAudience(TenantUrl, true) {
+	if !claims.VerifyAudience(Audience, true) {
 		return nil, trace.BadParameter("token invalid audience")
 	}
 	return claims, nil
@@ -196,4 +200,55 @@ func verifyNbf(nbf int64, now int64, required bool) bool {
 		return !required
 	}
 	return now >= nbf
+}
+
+func NewIdemeumJwtValidator(CacheTtl time.Duration) IdemeumJwtValidator {
+	return &keyCachingIdemeumJwtValidator{
+		cache:    make(map[string]*jwks),
+		cacheTtl: CacheTtl,
+	}
+}
+
+func (v *keyCachingIdemeumJwtValidator) getPublicKey(Issuer string) (*ecdsa.PublicKey, error) {
+	now := time.Now().Unix()
+	if val, ok := v.cache[Issuer]; ok {
+		if now < val.ExpiresAt {
+			return val.Key, nil
+		}
+	}
+	publicKey, err := loadPublicKey(Issuer + "/.well-known/jwks.json")
+	if err != nil {
+		log.Printf("Failed to load public key for tenant :%v \n", Issuer)
+		return nil, trace.BadParameter("invalid configuration")
+	}
+	v.cache[Issuer] = &jwks{
+		ExpiresAt: time.Unix(now, 0).Add(v.cacheTtl).Unix(),
+		Key:       publicKey,
+	}
+	return publicKey, nil
+
+}
+
+func (v *keyCachingIdemeumJwtValidator) ValidateJwtToken(Token string, Issuer string, Audience string) (*IdemeumClaims, error) {
+	//Token Validation
+	publicKey, err := v.getPublicKey(Issuer)
+	if err != nil {
+		log.Printf("Failed to load public key for tenant :%v \n", Issuer)
+		return nil, trace.BadParameter("invalid configuration")
+	}
+	return validateJwtToken(Token, Issuer, Audience, publicKey)
+}
+
+type IdemeumJwtValidator interface {
+	ValidateJwtToken(Token string, Issuer string, Audience string) (*IdemeumClaims, error)
+}
+
+type keyCachingIdemeumJwtValidator struct {
+	cache    map[string]*jwks
+	cacheTtl time.Duration
+}
+
+type jwks struct {
+	ExpiresAt int64
+	Key       *ecdsa.PublicKey
 }

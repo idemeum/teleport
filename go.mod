@@ -127,6 +127,8 @@ require (
 	k8s.io/kubectl v0.23.3
 )
 
+require github.com/lor00x/goldap v0.0.0-20180618054307-a546dffdd1a3 // indirect
+
 require (
 	cloud.google.com/go v0.100.2 // indirect
 	cloud.google.com/go/compute v0.1.0 // indirect
@@ -257,6 +259,7 @@ require (
 	github.com/spf13/cobra v1.2.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
+	github.com/vjeantet/ldapserver v1.0.1
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.1 // indirect

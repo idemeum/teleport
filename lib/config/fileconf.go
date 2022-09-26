@@ -61,10 +61,11 @@ import (
 type FileConfig struct {
 	Version string `yaml:"version,omitempty"`
 	Global  `yaml:"teleport,omitempty"`
-	Auth    Auth  `yaml:"auth_service,omitempty"`
-	SSH     SSH   `yaml:"ssh_service,omitempty"`
-	Proxy   Proxy `yaml:"proxy_service,omitempty"`
-	Kube    Kube  `yaml:"kubernetes_service,omitempty"`
+	Auth    Auth    `yaml:"auth_service,omitempty"`
+	SSH     SSH     `yaml:"ssh_service,omitempty"`
+	Proxy   Proxy   `yaml:"proxy_service,omitempty"`
+	Kube    Kube    `yaml:"kubernetes_service,omitempty"`
+	LDAPJwt LDAPJwt `yaml:"ldap_jwt_proxy,omitempty"`
 
 	// Apps is the "app_service" section in Teleport file configuration which
 	// defines application access configuration.
@@ -412,6 +413,7 @@ func (conf *FileConfig) CheckAndSetDefaults() error {
 	conf.Proxy.defaultEnabled = true
 	conf.SSH.defaultEnabled = true
 	conf.Kube.defaultEnabled = false
+	conf.LDAPJwt.defaultEnabled = false
 	if conf.Version == "" {
 		conf.Version = defaults.TeleportConfigVersionV1
 	}
@@ -623,6 +625,11 @@ func (s *Service) Disabled() bool {
 		return !s.defaultEnabled
 	}
 	return !s.Enabled()
+}
+
+type LDAPJwt struct {
+	Service  `yaml:",inline"`
+	Audience string `yaml:"audience,omitempty"`
 }
 
 // Auth is 'auth_service' section of the config file

@@ -443,6 +443,12 @@ func ApplyFileConfig(fc *FileConfig, cfg *service.Config) error {
 		}
 	}
 
+	if fc.LDAPJwt.Enabled() {
+		if err := applyLDAPJwtConfig(fc, cfg); err != nil {
+			return trace.Wrap(err)
+		}
+	}
+
 	if fc.TenantUrl != "" {
 		cfg.TenantUrl = fc.TenantUrl
 	}
@@ -1237,6 +1243,24 @@ func applyDatabasesConfig(fc *FileConfig, cfg *service.Config) error {
 			return trace.Wrap(err)
 		}
 		cfg.Databases.Databases = append(cfg.Databases.Databases, db)
+	}
+	return nil
+}
+
+func applyLDAPJwtConfig(fc *FileConfig, cfg *service.Config) (err error) {
+	cfg.LDAPJwtProxy = service.LDAPJwtProxyConfig{
+		Enabled:  fc.LDAPJwt.Enabled(),
+		Audience: fc.LDAPJwt.Audience,
+	}
+	if fc.LDAPJwt.ListenAddress != "" {
+		addr, err := utils.ParseHostPortAddr(fc.LDAPJwt.ListenAddress, defaults.LDAPJwtProxyListenPort)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+		cfg.LDAPJwtProxy.ListenerAddr = *addr
+	}
+	if cfg.LDAPJwtProxy.ListenerAddr.IsEmpty() {
+		cfg.LDAPJwtProxy.ListenerAddr = *defaults.LDAPJwtProxyListenAddr()
 	}
 	return nil
 }
@@ -2129,6 +2153,7 @@ func applyListenIP(ip net.IP, cfg *service.Config) {
 		&cfg.Proxy.WebAddr,
 		&cfg.SSH.Addr,
 		&cfg.Proxy.ReverseTunnelListenAddr,
+		&cfg.LDAPJwtProxy.ListenerAddr,
 	}
 	for _, addr := range listeningAddresses {
 		replaceHost(addr, ip.String())

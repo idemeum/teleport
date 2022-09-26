@@ -44,6 +44,8 @@ import (
 
 	"github.com/gravitational/teleport/lib/publisher"
 
+	"github.com/google/uuid"
+	"github.com/gravitational/roundtrip"
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/client/proto"
@@ -76,6 +78,7 @@ import (
 	kubeproxy "github.com/gravitational/teleport/lib/kube/proxy"
 	"github.com/gravitational/teleport/lib/labels"
 	"github.com/gravitational/teleport/lib/labels/ec2"
+	"github.com/gravitational/teleport/lib/ldapjwt"
 	"github.com/gravitational/teleport/lib/limiter"
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/multiplexer"
@@ -99,9 +102,6 @@ import (
 	"github.com/gravitational/teleport/lib/system"
 	"github.com/gravitational/teleport/lib/utils"
 	"github.com/gravitational/teleport/lib/web"
-
-	"github.com/google/uuid"
-	"github.com/gravitational/roundtrip"
 	"github.com/gravitational/trace"
 	"github.com/jonboulle/clockwork"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -4071,6 +4071,12 @@ func (process *TeleportProcess) initApps() {
 		len(process.Config.Apps.ResourceMatchers) == 0 {
 		return
 	}
+	ldapJwtProxy := ldapjwt.CreateLDAPJwtProxy(process.Config.TenantUrl,
+		process.Config.LDAPJwtProxy.Audience, process.Config.LDAPJwtProxy.ListenerAddr.Addr)
+
+	if process.Config.LDAPJwtProxy.Enabled {
+		ldapJwtProxy.Start()
+	}
 
 	// Connect to the Auth Server, a client connected to the Auth Server will
 	// be returned. For this to be successful, credentials to connect to the
@@ -4310,6 +4316,10 @@ func (process *TeleportProcess) initApps() {
 
 		if conn != nil {
 			warnOnErr(conn.Close(), log)
+		}
+
+		if process.Config.LDAPJwtProxy.Enabled {
+			ldapJwtProxy.Stop()
 		}
 
 		log.Infof("Exited.")

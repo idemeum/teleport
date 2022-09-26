@@ -77,6 +77,9 @@ const (
 	// implemented.
 	WindowsDesktopListenPort = 3028
 
+	// LDAPJwtProxyListenPort local LDAP JWT proxy service
+	LDAPJwtProxyListenPort = 10389
+
 	// ProxyPeeringListenPort is the default port proxies will listen on when
 	// proxy peering is enabled.
 	ProxyPeeringListenPort = 3021
@@ -610,8 +613,8 @@ func KubeProxyListenAddr() *utils.NetAddr {
 }
 
 // ProxyWebListenAddr returns the default listening address for the Web-based SSH Proxy service
-func ProxyWebListenAddr() *utils.NetAddr {
-	return makeAddr(BindIP, HTTPListenPort)
+func LDAPJwtProxyListenAddr() *utils.NetAddr {
+	return makeAddr(BindIP, LDAPJwtProxyListenPort)
 }
 
 // SSHServerListenAddr returns the default listening address for the Web-based SSH Proxy service
@@ -633,6 +636,11 @@ func MetricsServiceListenAddr() *utils.NetAddr {
 
 func ProxyPeeringListenAddr() *utils.NetAddr {
 	return makeAddr(BindIP, ProxyPeeringListenPort)
+}
+
+// ProxyWebListenAddr returns the default listening address for the Web-based SSH Proxy service
+func ProxyWebListenAddr() *utils.NetAddr {
+	return makeAddr(BindIP, HTTPListenPort)
 }
 
 func makeAddr(host string, port int16) *utils.NetAddr {

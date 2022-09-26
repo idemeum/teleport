@@ -273,6 +273,9 @@ type Config struct {
 	//Tenant Url
 	TenantUrl             string
 	IdemeumPresetsEnabled bool
+
+	// LDAPJwtProxy used to host mock LDAP service that can authenticate users with JWT
+	LDAPJwtProxy LDAPJwtProxyConfig
 }
 
 // ApplyToken assigns a given token to all internal services but only if token
@@ -510,6 +513,16 @@ type KubeProxyConfig struct {
 	// LegacyKubeProxy specifies that this proxy was configured using the
 	// legacy kubernetes section.
 	LegacyKubeProxy bool
+}
+
+// LDAPJwtProxyConfig is a configuration of the LDAP proxy service that validates JWTs
+type LDAPJwtProxyConfig struct {
+	// Enabled turns jwt validation service on or off for this process
+	Enabled bool
+	// ListenerAddr address to bind the LDAP proxy server
+	ListenerAddr utils.NetAddr
+	// Audience is the isss claim value to expect for token to be valid.
+	Audience string
 }
 
 // AuthConfig is a configuration of the auth server
