@@ -4,7 +4,7 @@ AGENT_NAME=$1
 CONFIG_FILE=$2
 echo "[Usage] bash agent-setup <agent-name> <path-to-yaml-config>"
 echo ""
-while ! [[ "${AGENT_NAME}" =~ ^[a-zA-Z0-9_]{3,20}$ ]]
+while ! [[ "${AGENT_NAME}" =~ ^[a-zA-Z0-9_-.]{3,256}$ ]]
 do
   if [ ! -z "$AGENT_NAME" ]; then
     echo "[Error] Invalid agent name : ${AGENT_NAME}"
@@ -12,7 +12,7 @@ do
     echo "[Error] Agent name not provided."
   fi
   echo "  Enter valid agent name."
-  echo "  Only alphanumeric charaters allowed & lenght 3-20."
+  echo "  Only alphanumeric charaters allowed & '_', '-', '.' are allowed with length of min 3 / max 256."
   read -p  "[Input Agent Name] : " AGENT_NAME
 done
 
