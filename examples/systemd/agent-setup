@@ -1,20 +1,19 @@
-!/bin/bash
-# Usage : bash
+#!/bin/bash
+
 AGENT_NAME=$1
 CONFIG_FILE=$2
-echo "[Usage] bash agent-setup <agent-name> <path-to-yaml-config>"
-echo ""
-while ! [[ "${AGENT_NAME}" =~ ^[a-zA-Z0-9_-.]{3,256}$ ]]
+while ! [[ "${AGENT_NAME}" =~ ^[a-zA-Z0-9_-]{3,256}$ ]]
 do
   if [ ! -z "$AGENT_NAME" ]; then
     echo "[Error] Invalid agent name : ${AGENT_NAME}"
   else
     echo "[Error] Agent name not provided."
   fi
-  echo "  Enter valid agent name."
-  echo "  Only alphanumeric charaters allowed & '_', '-', '.' are allowed with length of min 3 / max 256."
-  read -p  "[Input Agent Name] : " AGENT_NAME
+  echo "        Enter valid agent name."
+  echo "        Only alphanumeric characters allowed & '_', '-' are allowed with length of min 3 / max 256."
+  read -p  "[Input] Enter Name : " AGENT_NAME
 done
+echo "[Info ] Installing Agent  [Name: ${AGENT_NAME}]"
 
 while [ ! -f "${CONFIG_FILE}" ]
 do
@@ -23,14 +22,10 @@ do
   else
     echo "[Error] Agent config file not provided."
   fi
-  echo "  Enter config file path."
-  read -p  "[Input Agent Config] : " CONFIG_FILE
+  read -p  "[Input] Config File Path : " CONFIG_FILE
 done
 
-echo ""
-echo "*****************  Installing Agent *******************"
-echo "Agent name : ${AGENT_NAME}"
-echo ""
+echo "[Info ] Installing Agent  [Name: ${AGENT_NAME}]"
 
 AGENT_SERVICE_CONFIG="/etc/systemd/system/${AGENT_NAME}.service"
 AGENT_CONFIG_FILE="/etc/${AGENT_NAME}.yaml"
@@ -45,8 +40,7 @@ if test -f "${AGENT_CONFIG_FILE}"; then
     exit 1
 fi
 
-echo ""
-echo "[sudo] Writing agent service : ${AGENT_SERVICE_CONFIG}"
+echo "[Info ] Writing agent service : ${AGENT_SERVICE_CONFIG}"
 sudo cat << EOS >> ${AGENT_SERVICE_CONFIG}
 [Unit]
 Description=Idemeum remote access agent service : ${AGENT_NAME}
@@ -65,28 +59,24 @@ LimitNOFILE=8192
 WantedBy=multi-user.target
 EOS
 
-echo "[sudo] Copying agent config : ${CONFIG_FILE} -> ${AGENT_CONFIG_FILE}"
+echo "[Info ] Copying agent config : ${CONFIG_FILE} -> ${AGENT_CONFIG_FILE}"
 sudo cp  $CONFIG_FILE $AGENT_CONFIG_FILE
 
-echo "[info] Using `cat ${AGENT_CONFIG_FILE} | grep data_dir`"
-echo ""
-echo "[sudo] Reloading systemctl daemons."
+echo "[Info ] Using `cat ${AGENT_CONFIG_FILE} | grep data_dir`"
+echo "[Info ] Reloading systemctl daemons."
 sudo systemctl daemon-reload
-echo ""
-echo "[sudo] Enabling service : $AGENT_NAME"
+echo "[Info ] Enabling service : $AGENT_NAME"
 sudo systemctl enable "$AGENT_NAME.service"
-echo ""
-echo "[sudo] Starting agent ....."
+echo "[Info ] Starting agent ....."
 sudo systemctl start $AGENT_NAME
-echo ""
-echo "[sudo] checking agent status agent ....."
+echo "[Info ] checking agent status agent ....."
 sudo systemctl status $AGENT_NAME
-echo ""
-echo ""
-echo "***********************  Agent commands ***************"
-echo "sudo systemctl start|stop|status|restart ${AGENT_NAME}"
-echo "*******************************************************"
-echo ""
-echo "***********************  Agent logs *******************"
-echo "sudo journalctl -fu ${AGENT_NAME}"
-echo "*******************************************************"
+echo "*********************** Usage ************************"
+echo "Lifecycle : sudo systemctl start|stop|status|restart|disable ${AGENT_NAME}"
+echo "Logs      : sudo journalctl -fu ${AGENT_NAME}"
+echo "Uninstall : run following commands"
+echo "         sudo systemctl stop ${AGENT_NAME}"
+echo "         sudo rm $AGENT_SERVICE_CONFIG"
+echo "         sudo rm $AGENT_CONFIG_FILE"
+echo "         sudo systemctl daemon-reload"
+echo "******************************************************"
