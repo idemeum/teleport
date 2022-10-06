@@ -230,6 +230,8 @@ Resources:
           Value: !Join [" ", ["Remote Access ", !Ref TenantName, " - AuthEc2Instance"]]
         - Key: VantaOwner
           Value: goprean@idemeum.com
+        - Key: VantaNoAlert
+          Value: 'Need to have this with public port available so the reverse proxy will work. Also no alarm will be created for CPU'
 
   AuthLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -600,6 +602,8 @@ Resources:
           Value: !Join [" ", ["Remote Access ", !Ref TenantName, " - ProxyEc2Instance"]]
         - Key: VantaOwner
           Value: goprean@idemeum.com
+        - Key: VantaNoAlert
+          Value: 'Need to have this with public port available so the reverse proxy will work. Also no alarm will be created for CPU'
 
   ProxyLaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
@@ -1031,6 +1035,8 @@ Resources:
           Value: !Join [" ", ["Remote Access ", !Ref TenantName, " -  Main Table"]]
         - Key: VantaOwner
           Value: goprean@idemeum.com
+        - Key: VantaNoAlert
+          Value: 'Will not create read/write monitoring alarms for this table.'
 
 
   # LocksTable is a dynamodb table that is
@@ -1064,6 +1070,8 @@ Resources:
           Value: !Join [" ", ["Remote Access ", !Ref TenantName, " -  Locks Table"]]
         - Key: VantaOwner
           Value: goprean@idemeum.com
+        - Key: VantaNoAlert
+          Value: 'Will not create read/write monitoring alarms for this table.'
 
   EventsTable:
     Type: AWS::DynamoDB::Table
@@ -1110,6 +1118,8 @@ Resources:
           Value: !Join [" ", ["Remote Access ", !Ref TenantName, " - Events Table"]]
         - Key: VantaOwner
           Value: goprean@idemeum.com
+        - Key: VantaNoAlert
+          Value: 'Will not create read/write monitoring alarms for this table.'          
   # Bucket is used to publish letsencrypt certs
   # and store recorded SSH sessions
   Bucket:
