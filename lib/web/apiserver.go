@@ -313,6 +313,9 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 	h.POST("/webapi/sessions/renew", h.WithAuth(h.renewSession))
 	// idemeum session
 	h.POST("/webapi/sessions/idemeum", httplib.MakeHandler(h.createSessionForIdemeumServiceToken))
+
+	h.GET("/webapi/rootcerts", h.WithAuth(h.getRootCertificates))
+
 	h.POST("/webapi/users", h.WithAuth(h.createUserHandle))
 	h.PUT("/webapi/users", h.WithAuth(h.updateUserHandle))
 	h.GET("/webapi/users", h.WithAuth(h.getUsersHandle))
@@ -1667,6 +1670,54 @@ func (h *Handler) createSessionForIdemeumServiceToken(w http.ResponseWriter, r *
 		return nil, trace.AccessDenied("need auth")
 	}
 	return newSessionResponse(ctx)
+}
+
+type RootCertificates struct {
+	Windows string `json:"windows"`
+}
+
+func (h *Handler) getRootCertificates(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	client, err := ctx.GetClient()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	clusterName, err := client.GetDomainName(r.Context())
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	windowsPemCert, err := getWindowsRootCertificate(r.Context(), client, clusterName)
+
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	return &RootCertificates{
+		Windows: windowsPemCert,
+	}, nil
+}
+
+func getWindowsRootCertificate(ctx context.Context, client auth.ClientI, clusterName string) (string, error) {
+	certAuthority, err := client.GetCertAuthority(
+		ctx,
+		types.CertAuthID{Type: types.UserCA, DomainName: clusterName},
+		false)
+
+	if err != nil {
+		return "", trace.Wrap(err)
+	}
+
+	if len(certAuthority.GetActiveKeys().TLS) != 1 {
+		return "", trace.BadParameter("expected single windows certificate authority, got %v", len(certAuthority.GetActiveKeys().TLS))
+	}
+
+	keyPair := certAuthority.GetActiveKeys().TLS[0]
+	pemCert := string(keyPair.Cert)
+	pemCert = strings.ReplaceAll(pemCert, "\n", "")
+	pemCert = strings.Replace(pemCert, "-----BEGIN CERTIFICATE-----", "", 1)
+	pemCert = strings.Replace(pemCert, "-----END CERTIFICATE-----", "", 1)
+	return pemCert, nil
 }
 
 type changeUserAuthenticationRequest struct {
