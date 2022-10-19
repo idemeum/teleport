@@ -17,6 +17,7 @@ Parameters:
     AllowedValues:
     - idemeumlab.com
     - idemeum.com
+    - idemeum.in
 
   DeploymentType:
     Description: Remote Access deployment configuration type
