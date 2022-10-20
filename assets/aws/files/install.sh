@@ -110,6 +110,8 @@ rm -f /home/ec2-user/.ssh/authorized_keys
 # Clean up copied temp files
 rm -rf /tmp/files
 
+setcap CAP_NET_BIND_SERVICE=+eip /usr/local/bin/teleport
+
 # Clean up all packages
 yum -y clean all
 
