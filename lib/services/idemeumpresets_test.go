@@ -37,6 +37,19 @@ func TestIdemeumSamlConnector(t *testing.T) {
 	require.Equal(t, connector.GetSSO(), "https://example.idemeum.com/saml/signon")
 }
 
+func TestIdemeumWithAnotherDomainSamlConnector(t *testing.T) {
+
+	connector, err := NewIdemeumSamlConnector("https://example.idemeum.co.au")
+
+	require.Nil(t, err)
+	require.Empty(t, connector.GetSigningKeyPair())
+
+	require.Equal(t, connector.GetAssertionConsumerService(), "https://example.remote.idemeum.co.au/v1/webapi/saml/acs")
+	require.Equal(t, connector.GetIssuer(), "https://example.idemeum.co.au/api/saml/metadata")
+	require.Equal(t, connector.GetEntityDescriptorURL(), "https://example.idemeum.co.au/api/saml/metadata")
+	require.Equal(t, connector.GetServiceProviderIssuer(), "https://example.remote.idemeum.co.au/v1/webapi/saml/acs")
+	require.Equal(t, connector.GetSSO(), "https://example.idemeum.co.au/saml/signon")
+}
 func TestIdemeumAdminRole(t *testing.T) {
 	role := NewIdemeumAdminRole()
 

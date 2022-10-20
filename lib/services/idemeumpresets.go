@@ -17,6 +17,7 @@ limitations under the License.
 package services
 
 import (
+	"net/url"
 	"strings"
 
 	"github.com/gravitational/teleport/api/constants"
@@ -120,13 +121,32 @@ func getRoleRules(admin bool) []types.Rule {
 }
 
 func getACSUrl(tenantUrl string) (string, error) {
-	remoteAccessUrl := ""
-	if strings.Contains(tenantUrl, ".idemeum.com") {
-		remoteAccessUrl = strings.ReplaceAll(tenantUrl, ".idemeum.com", ".remote.idemeum.com")
-	} else if strings.Contains(tenantUrl, ".idemeumlab.com") {
-		remoteAccessUrl = strings.ReplaceAll(tenantUrl, ".idemeumlab.com", ".remote.idemeumlab.com")
-	} else {
+	u, err := url.Parse(tenantUrl)
+	if err != nil {
 		return "", trace.BadParameter("invalid idemeum tenant url")
 	}
-	return remoteAccessUrl + "/v1/webapi/saml/acs", nil
+	remoteAccessServerFqdn := getRemoteAccessServerFqdn(u.Hostname())
+	if remoteAccessServerFqdn == "" {
+		return "", trace.BadParameter("invalid idemeum tenant url")
+	}
+
+	return "https://" + remoteAccessServerFqdn + "/v1/webapi/saml/acs", nil
+}
+
+func getRemoteAccessServerFqdn(hostName string) string {
+	hostNameParts := strings.Split(hostName, ".")
+	if len(hostNameParts) < 3 {
+		return ""
+	}
+
+	newHostNameParts := make([]string, len(hostNameParts)+1)
+	newHostNameParts[0] = hostNameParts[0]
+	newHostNameParts[1] = "remote"
+	index := 2
+	for i := 1; i < len(hostNameParts); i++ {
+		newHostNameParts[index] = hostNameParts[i]
+		index++
+	}
+
+	return strings.Join(newHostNameParts, ".")
 }
