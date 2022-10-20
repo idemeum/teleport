@@ -61,9 +61,9 @@ Mappings:
 
   VersionConfig:
     1.0.0:
-      GitHash: 2241f87cf
-      APSOUTH1: ami-0ec67e26b9e7793fa
-      USAWEST2: ami-064060f866eff3876
+      GitHash: ae0c3bd9f
+      APSOUTH1: ami-0e205e933f2bd43c5
+      USAWEST2: ami-067fec0703a38b2d8
 
   DeploymentTypeConfig:
     LA-Starter:
