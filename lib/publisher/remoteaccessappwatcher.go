@@ -101,6 +101,8 @@ func getRemoteAppType(resource types.Resource) RemoteAppType {
 		return Server
 	case types.KindAppServer, types.KindApp:
 		return Webapp
+	case types.KindWindowsDesktop:
+		return Desktop
 	}
 	return Invalid
 }
