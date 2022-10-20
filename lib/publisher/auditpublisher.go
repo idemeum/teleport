@@ -96,6 +96,8 @@ func getDefaultEventByTypes() map[string]string {
 	auditTypes[events.SessionStartEvent] = events.SessionStartEvent
 	auditTypes[events.SessionEndEvent] = events.SessionEndEvent
 	auditTypes[events.AppSessionStartEvent] = events.AppSessionStartEvent
+	auditTypes[events.WindowsDesktopSessionStartEvent] = events.WindowsDesktopSessionStartEvent
+	auditTypes[events.WindowsDesktopSessionEndEvent] = events.WindowsDesktopSessionEndEvent
 	return auditTypes
 }
 

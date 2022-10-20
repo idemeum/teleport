@@ -223,10 +223,10 @@ func (d *WindowsDesktopV3) GetDomain() string {
 
 // GetIdemeumAppId returns idemeum id label
 func (d *WindowsDesktopV3) GetIdemeumAppId() string {
-	if d.Metadata.Labels != nil {
-		return d.Metadata.Labels["idemeum_app_id"]
-	}
-	return ""
+	// Windows desktop idemeum app id is not generated,
+	// we would still want to entitle the user to windows host
+	// app management will use the hostId which is unique per windows host
+	return d.GetHostID()
 }
 
 // Origin returns the origin value of the resource.
