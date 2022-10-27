@@ -1200,7 +1200,7 @@ func (s *WindowsService) crlDN() string {
 // crlContainerDN generates the LDAP distinguished name (DN) of the container
 // where the certificate revocation list is published
 func (s *WindowsService) crlContainerDN() string {
-	return "CN=Teleport,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration," + s.cfg.LDAPConfig.domainDN()
+	return "CN=Idemeum,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration," + s.cfg.LDAPConfig.domainDN()
 }
 
 // generateCredentials generates a private key / certificate pair for the given
