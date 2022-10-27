@@ -97,11 +97,11 @@ func TestCRLDN(t *testing.T) {
 	}{
 		{
 			clusterName: "test",
-			crlDN:       "CN=test,CN=Teleport,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=goteleport,DC=com",
+			crlDN:       "CN=test,CN=Idemeum,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=goteleport,DC=com",
 		},
 		{
 			clusterName: "cluster.goteleport.com",
-			crlDN:       "CN=cluster.goteleport.com,CN=Teleport,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=goteleport,DC=com",
+			crlDN:       "CN=cluster.goteleport.com,CN=Idemeum,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=goteleport,DC=com",
 		},
 	} {
 		t.Run(test.clusterName, func(t *testing.T) {
@@ -172,7 +172,7 @@ func TestGenerateCredentials(t *testing.T) {
 
 	require.Equal(t, user, cert.Subject.CommonName)
 	require.Contains(t, cert.CRLDistributionPoints,
-		`ldap:///CN=test,CN=Teleport,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=example,DC=com?certificateRevocationList?base?objectClass=cRLDistributionPoint`)
+		`ldap:///CN=test,CN=Idemeum,CN=CDP,CN=Public Key Services,CN=Services,CN=Configuration,DC=test,DC=example,DC=com?certificateRevocationList?base?objectClass=cRLDistributionPoint`)
 
 	foundKeyUsage := false
 	foundAltName := false
