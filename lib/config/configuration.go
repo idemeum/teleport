@@ -55,6 +55,7 @@ import (
 	"github.com/gravitational/teleport/lib/pam"
 	"github.com/gravitational/teleport/lib/service"
 	"github.com/gravitational/teleport/lib/services"
+	"github.com/gravitational/teleport/lib/tlsca"
 	"github.com/gravitational/teleport/lib/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -1451,6 +1452,10 @@ func applyWindowsDesktopConfig(fc *FileConfig, cfg *service.Config) error {
 		return trace.Wrap(err)
 	}
 
+	if fc.WindowsDesktop.LDAP.DEREncodedCAFile != "" && fc.WindowsDesktop.LDAP.PEMEncodedCACert != "" {
+		return trace.BadParameter("WindowsDesktopService can not use both der_ca_file and ldap_ca_cert")
+	}
+
 	var cert *x509.Certificate
 	if fc.WindowsDesktop.LDAP.DEREncodedCAFile != "" {
 		rawCert, err := os.ReadFile(fc.WindowsDesktop.LDAP.DEREncodedCAFile)
@@ -1461,6 +1466,14 @@ func applyWindowsDesktopConfig(fc *FileConfig, cfg *service.Config) error {
 		cert, err = x509.ParseCertificate(rawCert)
 		if err != nil {
 			return trace.WrapWithMessage(err, "parsing the LDAP root CA file %v", fc.WindowsDesktop.LDAP.DEREncodedCAFile)
+		}
+	}
+
+	if fc.WindowsDesktop.LDAP.PEMEncodedCACert != "" {
+		log.Infof("configured ldap ca cert : %v", fc.WindowsDesktop.LDAP.PEMEncodedCACert)
+		cert, err = tlsca.ParseCertificatePEM([]byte(fc.WindowsDesktop.LDAP.PEMEncodedCACert))
+		if err != nil {
+			return trace.WrapWithMessage(err, "parsing the LDAP root CA PEM cert")
 		}
 	}
 
