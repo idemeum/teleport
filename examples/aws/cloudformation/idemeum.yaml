@@ -119,10 +119,10 @@ Resources:
       VpcId: '{{resolve:ssm:/Services/VPC/Id}}'
       SecurityGroupIngress:
         - IpProtocol: tcp
-          Description: Only proxy service should be able to access the auth service.
+          Description: Everyone is allowed to use auth service API.
           FromPort: 3025
           ToPort: 3025
-          SourceSecurityGroupId: !Ref ProxySecurityGroup
+          CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: "-1"
           Description: Egress is allowed anywhere
