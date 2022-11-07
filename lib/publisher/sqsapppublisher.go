@@ -23,7 +23,7 @@ type sqsPublisherConfig struct {
 func NewSQSAppPublisherService(cfg AppPublisherConfig) AppPublisher {
 	log.Info("Initializing the sqs app publisher service")
 	session := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+		Region: &cfg.Region,
 	}))
 
 	sqsService := sqs.New(session)

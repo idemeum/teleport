@@ -22,6 +22,7 @@ type AuditPublisher interface {
 type AuditPublisherConfig struct {
 	Enabled      bool
 	SQSQueueName string
+	Region       string
 	EventByTypes map[string]string
 }
 
@@ -42,6 +43,10 @@ type AuditMessagePublisher interface {
 func (cfg *AuditPublisherConfig) CheckAndSetDefaults() error {
 	if cfg.SQSQueueName == "" {
 		cfg.SQSQueueName = defaultAuditSQSQueueName
+	}
+
+	if cfg.Region == "" {
+		cfg.Region = "us-west-2"
 	}
 
 	if len(cfg.EventByTypes) == 0 {

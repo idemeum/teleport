@@ -272,8 +272,10 @@ auth_service:
     connector_name: idemeum-saml
   audit_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   app_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
@@ -483,8 +485,10 @@ auth_service:
     connector_name: idemeum-saml
   audit_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   app_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
@@ -595,8 +599,10 @@ auth_service:
     connector_name: idemeum-saml
   audit_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   app_publisher_config:
     enabled: true
+    region: ${EC2_REGION}
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 
 ssh_service:

@@ -718,6 +718,7 @@ func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 
 	if fc.Auth.AppPublisherConfig == nil {
 		cfg.Auth.AppPublisherConfig.SQSQueueName = ""
+		cfg.Auth.AppPublisherConfig.Region = ""
 		return nil
 	}
 
@@ -725,6 +726,7 @@ func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 	cfg.Auth.AppPublisherConfig.Enabled = enabled
 
 	cfg.Auth.AppPublisherConfig.SQSQueueName = fc.Auth.AppPublisherConfig.SQSQueueName
+	cfg.Auth.AppPublisherConfig.Region = fc.Auth.AppPublisherConfig.Region
 
 	if fc.TenantUrl != "" {
 		cfg.Auth.AppPublisherConfig.TenantUrl = fc.TenantUrl
@@ -736,12 +738,15 @@ func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 func applyAuditPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 	if fc.Auth.AuditPublisherConfig == nil {
 		cfg.Auth.AuditPublisherConfig.SQSQueueName = ""
+		cfg.Auth.AuditPublisherConfig.Region = ""
 		return nil
 	}
 
 	enabled, _ := apiutils.ParseBool(fc.Auth.AuditPublisherConfig.Enabled)
 	cfg.Auth.AuditPublisherConfig.Enabled = enabled
 	cfg.Auth.AuditPublisherConfig.SQSQueueName = fc.Auth.AuditPublisherConfig.SQSQueueName
+	cfg.Auth.AuditPublisherConfig.Region = fc.Auth.AuditPublisherConfig.Region
+
 	if len(fc.Auth.AuditPublisherConfig.EventTypes) > 0 {
 		eventByTypes := make(map[string]string)
 		for _, eventType := range fc.Auth.AuditPublisherConfig.EventTypes {
