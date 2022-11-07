@@ -36,6 +36,7 @@ type AppPublisher interface {
 type AppPublisherConfig struct {
 	TenantUrl      string
 	SQSQueueName   string
+	Region         string
 	Enabled        bool
 	DelayInSeconds int64
 }
@@ -43,6 +44,10 @@ type AppPublisherConfig struct {
 func (cfg *AppPublisherConfig) CheckAndSetDefaults() error {
 	if cfg.SQSQueueName == "" {
 		cfg.SQSQueueName = defaultSQSQueueName
+	}
+
+	if cfg.Region == "" {
+		cfg.Region = "us-west-2"
 	}
 
 	if cfg.DelayInSeconds == 0 {

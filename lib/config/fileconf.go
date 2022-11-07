@@ -725,11 +725,13 @@ type Auth struct {
 type AppPublisherConfig struct {
 	Enabled      string `yaml:"enabled,omitempty"`
 	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
+	Region       string `yaml:"region,omitempty"`
 }
 
 type AuditPublisherConfig struct {
 	Enabled      string `yaml:"enabled,omitempty"`
 	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
+	Region       string `yaml:"region,omitempty"`
 	// EventTypes audit event types are published using this publisher.
 	EventTypes apiutils.Strings `yaml:"event_types,omitempty"`
 }
