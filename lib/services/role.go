@@ -1956,6 +1956,11 @@ func (set RoleSet) checkAccess(r AccessCheckable, mfa AccessMFAParams, matchers 
 	namespace := types.ProcessNamespace(r.GetMetadata().Namespace)
 	allLabels := r.GetAllLabels()
 
+	if r.GetKind() == types.KindWindowsDesktop {
+		// Add idemeum app id label on the fly to let matcher work.
+		allLabels["idemeum_app_id"] = r.GetName()
+	}
+
 	var getRoleLabels func(types.Role, types.RoleConditionType) types.Labels
 	switch r.GetKind() {
 	case types.KindDatabase:
