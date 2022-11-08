@@ -31,7 +31,7 @@ func NewIdemeumAdminRole() types.Role {
 }
 
 func NewIdemeumUserRole() types.Role {
-	return idemeumRole("USER", true)
+	return idemeumRole("USER", false)
 }
 
 func NewIdemeumSamlConnector(idemeumTenantUrl string) (types.SAMLConnector, error) {
@@ -90,15 +90,17 @@ func idemeumRole(roleName string, admin bool) types.Role {
 				RecordSession:     &types.RecordSession{Desktop: types.NewBoolOption(true)},
 			},
 			Allow: types.RoleConditions{
-				Namespaces:          []string{apidefaults.Namespace},
-				NodeLabels:          types.Labels{"idemeum_app_id": []string{"{{external.node_ids}}"}},
-				AppLabels:           types.Labels{"idemeum_app_id": []string{"{{external.app_ids}}"}},
-				Rules:               getRoleRules(admin),
-				IdemeumEntitlements: []string{"{{external.idemeum_entitlements}}"},
+				Namespaces:           []string{apidefaults.Namespace},
+				NodeLabels:           types.Labels{"idemeum_app_id": []string{"{{external.node_ids}}"}},
+				AppLabels:            types.Labels{"idemeum_app_id": []string{"{{external.app_ids}}"}},
+				WindowsDesktopLabels: types.Labels{"idemeum_app_id": []string{"{{external.win_ids}}"}},
+				Rules:                getRoleRules(admin),
+				IdemeumEntitlements:  []string{"{{external.idemeum_entitlements}}"},
 			},
 		},
 	}
 	role.SetLogins(types.Allow, []string{"{{external.node_users}}"})
+	role.SetWindowsLogins(types.Allow, []string{"{{external.win_users}}"})
 	return role
 }
 

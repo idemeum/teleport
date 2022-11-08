@@ -1520,6 +1520,13 @@ func (process *TeleportProcess) initAuthService() error {
 		return trace.Wrap(err)
 	}
 
+	if cfg.IdemeumPresetsEnabled {
+		err = auth.EnsureIdemeumRoles(authServer)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+	}
+
 	log := process.log.WithFields(logrus.Fields{
 		trace.Component: teleport.Component(teleport.ComponentAuth, process.id),
 	})
