@@ -537,18 +537,8 @@ func createPresets(asrv *Server) error {
 	return nil
 }
 
-func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
-	if !cfg.IdemeumPresetsEnabled {
-		log.Infof("skipping idemeum presets for the tenant:%v", cfg.TenantUrl)
-		return nil
-	}
-
-	if cfg.TenantUrl == "" {
-		return trace.BadParameter("missing idemeum tenant url")
-	}
-
-	log.Infof("Applying idemeum presets for the tenant:%v", cfg.TenantUrl)
-
+func EnsureIdemeumRoles(asrv *Server) error {
+	log.Infof("Enuring idemeum preset roles exists.")
 	roles := []types.Role{
 		services.NewIdemeumAdminRole(),
 		services.NewIdemeumUserRole(),
@@ -563,6 +553,22 @@ func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
 			}
 		}
 	}
+	return nil
+}
+
+func createIdemeumPresets(asrv *Server, cfg InitConfig) error {
+	if !cfg.IdemeumPresetsEnabled {
+		log.Infof("skipping idemeum presets for the tenant:%v", cfg.TenantUrl)
+		return nil
+	}
+
+	if cfg.TenantUrl == "" {
+		return trace.BadParameter("missing idemeum tenant url")
+	}
+
+	log.Infof("Applying idemeum presets for the tenant:%v", cfg.TenantUrl)
+
+	ctx := context.Background()
 
 	connector, err := services.NewIdemeumSamlConnector(cfg.TenantUrl)
 	if err != nil {
