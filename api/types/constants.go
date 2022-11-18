@@ -309,6 +309,8 @@ const (
 	// that the resource originates from.
 	OriginLabel = TeleportNamespace + "/origin"
 
+	WindowsDomainLabel = TeleportNamespace + "/windows_domain"
+
 	// OriginDefaults is an origin value indicating that the resource was
 	// constructed as a default value.
 	OriginDefaults = "defaults"

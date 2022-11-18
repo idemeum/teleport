@@ -988,6 +988,7 @@ func (s *WindowsService) staticHostHeartbeatInfo(netAddr utils.NetAddr,
 		// as the name is a randomly generated UUID
 		labels := getHostLabels(addr)
 		labels[types.OriginLabel] = types.OriginConfigFile
+		labels[types.WindowsDomainLabel] = s.cfg.Domain
 		desktop, err := types.NewWindowsDesktopV3(
 			name,
 			labels,
