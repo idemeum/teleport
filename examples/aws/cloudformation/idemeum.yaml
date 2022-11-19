@@ -36,8 +36,9 @@ Parameters:
   RemoteAccessVersion:
     Description: Remote Access version
     Type: String
-    Default: 1.0.0.1918067ae
+    Default: 1.0.0.92ade14d5
     AllowedValues:
+    - 1.0.0.92ade14d5
     - 1.0.0.1918067ae
     - 1.0.0.b50a1788d
 
@@ -61,6 +62,10 @@ Mappings:
     us-west-2: {ID: USAWEST2}
 
   VersionConfig:
+    1.0.0.92ade14d5:
+      GitHash: 92ade14d5
+      APSOUTH1: ami-000f395c1aa509e9f
+      USAWEST2: ami-033eac368def212a3
     1.0.0.1918067ae:
       GitHash: 1918067ae
       APSOUTH1: ami-078bcb3d90eec1664
