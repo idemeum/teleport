@@ -188,6 +188,12 @@ Resources:
             AUDIT_RETENTION_DAYS=${EventsRetentionDays}
             EOF
 
+            # Delete existing lock so that new instance can acquire lock.
+            aws dynamodb delete-item \
+                --region ${AWS::Region} \
+                --table-name ${LocalLocksTableName} \
+                --key "{\"Lock\":{\"S\":\"/auth/servers\"}}"
+
             # Generate config and start proxy service
             /usr/local/bin/teleport-generate-config
             systemctl enable teleport-ssm-publish-tokens.service teleport-ssm-publish-tokens.timer teleport-get-cert.service teleport-get-cert.timer teleport-renew-cert.service teleport-renew-cert.timer
