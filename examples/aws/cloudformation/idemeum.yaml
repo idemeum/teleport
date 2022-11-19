@@ -122,7 +122,6 @@ Resources:
 # Auth server setup
   AuthSecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    Condition: ModeActive
     Properties:
       GroupName: !Join [" ", ["Remote Access ", !Ref TenantName, " AuthSecurityGroup"]]
       GroupDescription: Remote Access - Allow proxy and auth server access
@@ -422,7 +421,6 @@ Resources:
   #
   ProxySecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    Condition: ModeActive
     Properties:
       GroupName: !Join [" ", ["Remote Access ", !Ref TenantName, " ProxySecurityGroup"]]
       GroupDescription: Remote Access - Allow proxy and auth server access
@@ -744,7 +742,6 @@ Resources:
 
   AuthRole:
     Type: AWS::IAM::Role
-    Condition: ModeActive
     Properties:
       RoleName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'AuthRole']]
       AssumeRolePolicyDocument:
@@ -763,7 +760,6 @@ Resources:
   # to SSM parameter store
   AuthPolicies:
     Type: AWS::IAM::Policy
-    Condition: ModeActive
     Properties:
       PolicyName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'AuthRole', 'ssm']]
       PolicyDocument:
@@ -927,14 +923,12 @@ Resources:
 
   AuthInstanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Condition: ModeActive
     Properties:
       Roles:
       - {Ref: AuthRole}
 
   ProxyRole:
     Type: AWS::IAM::Role
-    Condition: ModeActive
     Properties:
       RoleName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'ProxyRole']]
       AssumeRolePolicyDocument:
@@ -954,7 +948,6 @@ Resources:
   # And read certs from encrypted S3 bucket
   ProxyPolicies:
     Type: AWS::IAM::Policy
-    Condition: ModeActive
     Properties:
       PolicyName: !Join ['-', [ 'RemoteAccess', !Ref TenantName, !Ref AWS::Region, 'ProxyRole', 'ssm']]
       PolicyDocument:
@@ -1004,7 +997,6 @@ Resources:
 
   ProxyInstanceProfile:
     Type: AWS::IAM::InstanceProfile
-    Condition: ModeActive
     Properties:
       Roles:
       - {Ref: ProxyRole}
