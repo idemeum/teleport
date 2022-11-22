@@ -4665,12 +4665,7 @@ func (a *ServerWithRoles) UpdateWindowsDesktop(ctx context.Context, s types.Wind
 	if err := a.checkAccessToWindowsDesktop(s); err != nil {
 		return trace.Wrap(err)
 	}
-	err = a.authServer.UpdateWindowsDesktop(ctx, s)
-
-	if err == nil {
-		publishAppChanges(a.authServer, publisher.Desktop)
-	}
-	return err
+	return a.authServer.UpdateWindowsDesktop(ctx, s)
 }
 
 // UpsertWindowsDesktop updates a windows desktop resource, creating it if it doesn't exist.
@@ -4702,7 +4697,9 @@ func (a *ServerWithRoles) UpsertWindowsDesktop(ctx context.Context, s types.Wind
 		return trace.Wrap(err)
 	}
 	err = a.authServer.UpsertWindowsDesktop(ctx, s)
-	if err == nil {
+
+	// Publish notification only if the desktop added
+	if err == nil && len(existing) == 0 {
 		publishAppChanges(a.authServer, publisher.Desktop)
 	}
 	return err
