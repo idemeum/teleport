@@ -87,7 +87,8 @@ func idemeumRole(roleName string, admin bool) types.Role {
 				PortForwarding:    types.NewBoolOption(true),
 				ForwardAgent:      types.NewBool(true),
 				BPF:               apidefaults.EnhancedEvents(),
-				RecordSession:     &types.RecordSession{Desktop: types.NewBoolOption(true)},
+				DesktopClipboard:  types.NewBoolOption(false),
+				RecordSession:     &types.RecordSession{Desktop: types.NewBoolOption(false)},
 			},
 			Allow: types.RoleConditions{
 				Namespaces:           []string{apidefaults.Namespace},
