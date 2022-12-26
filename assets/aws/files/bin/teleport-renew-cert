@@ -14,6 +14,29 @@ if [ ! -f /etc/teleport.d/role.auth ] && [ ! -f /etc/teleport.d/role.all ]; then
     exit 0
 fi
 
+# IDEMEUM : For unknown reasons /etc/letsencrypt directory gets out of sync and all contents 
+#           are deletd, this causes certbot renewal to fail.
+#           This section restores letsencrypt directory so that certbot can succeed.
+#           It counld take take upto 2 hours for for proxy service to update its certs.
+if [ ! -d "/etc/letsencrypt/archive/${TELEPORT_DOMAIN_NAME}" ]; then
+    aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/accounts" /etc/letsencrypt/accounts
+    aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/archive" /etc/letsencrypt/archive
+    aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/csr" /etc/letsencrypt/csr
+    aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/keys" /etc/letsencrypt/keys
+    aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/renewal" /etc/letsencrypt/renewal
+
+    ARCHIVE="/etc/letsencrypt/archive/${TELEPORT_DOMAIN_NAME}";
+    LIVE="/etc/letsencrypt/live/${TELEPORT_DOMAIN_NAME}"
+
+    mkdir -p $LIVE
+    pushd $ARCHIVE
+    ln -s "$ARCHIVE/$(ls | grep -i ^cert | tail -1)" "$LIVE/cert.pem"
+    ln -s "$ARCHIVE/$(ls | grep -i ^chain | tail -1)" "$LIVE/chain.pem"
+    ln -s "$ARCHIVE/$(ls | grep -i ^fullchain | tail -1)" "$LIVE/fullchain.pem"
+    ln -s "$ARCHIVE/$(ls | grep -i ^privkey | tail -1)" "$LIVE/privkey.pem"
+    popd
+fi
+
 # This is called periodically, if renewal is successful
 # certs are uploaded to the S3 Bucket
 /usr/local/bin/certbot renew --deploy-hook=/usr/local/bin/teleport-upload-cert
