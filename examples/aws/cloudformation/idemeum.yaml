@@ -36,8 +36,9 @@ Parameters:
   RemoteAccessVersion:
     Description: Remote Access version
     Type: String
-    Default: 1.0.0.5cde3fe13
+    Default: 1.0.0.c8292bf0e
     AllowedValues:
+    - 1.0.0.c8292bf0e
     - 1.0.0.5cde3fe13
     - 1.0.0.92ade14d5
     - 1.0.0.1918067ae
@@ -63,6 +64,10 @@ Mappings:
     us-west-2: {ID: USAWEST2}
 
   VersionConfig:
+    1.0.0.c8292bf0e:
+      GitHash: c8292bf0e
+      APSOUTH1: ami-0a6b70e42325a0f43
+      USAWEST2: ami-0c9751938ad39c74e
     1.0.0.5cde3fe13: 
       GitHash: 5cde3fe13
       APSOUTH1: ami-0ffb7b768c7c61503
@@ -201,6 +206,8 @@ Resources:
 
             # Generate config and start proxy service
             /usr/local/bin/teleport-generate-config
+            /usr/local/bin/teleport-renew-cert
+
             systemctl enable teleport-ssm-publish-tokens.service teleport-ssm-publish-tokens.timer teleport-get-cert.service teleport-get-cert.timer teleport-renew-cert.service teleport-renew-cert.timer
             systemctl start --no-block teleport-auth teleport-ssm-publish-tokens.timer teleport-get-cert.timer teleport-renew-cert.timer
 
@@ -530,6 +537,7 @@ Resources:
   ProxyEc2Instance:
     Type: AWS::EC2::Instance
     Condition: LowAvailablity
+    DependsOn: AuthEc2Instance
     CreationPolicy:
       ResourceSignal:
         Count: 1
