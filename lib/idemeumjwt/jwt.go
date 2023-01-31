@@ -32,7 +32,7 @@ type IdemeumClaims struct {
 
 func ValidateJwtToken(ServiceToken string, TenantUrl string) (*IdemeumClaims, error) {
 	//Token Validation
-	key, err := loadPublicKey(TenantUrl + "/.well-known/jwks.json")
+	key, err := loadPublicKey(TenantUrl + "/api/oauth2/v1/internal-keys")
 	if err != nil {
 		log.Printf("Failed to load public key for tenant :%v \n", TenantUrl)
 		return nil, trace.BadParameter("invalid configuration")
