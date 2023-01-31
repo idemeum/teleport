@@ -162,7 +162,7 @@ Resources:
     CreationPolicy:
       ResourceSignal:
         Count: 1
-        Timeout: PT10M
+        Timeout: PT30M
     Properties:
       IamInstanceProfile: !Ref AuthInstanceProfile
       ImageId: !FindInMap [VersionConfig, !Ref RemoteAccessVersion, !FindInMap [RegionId, !Ref 'AWS::Region', ID]]
