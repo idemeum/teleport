@@ -18,23 +18,24 @@ fi
 #           are deletd, this causes certbot renewal to fail.
 #           This section restores letsencrypt directory so that certbot can succeed.
 #           It counld take take upto 2 hours for for proxy service to update its certs.
-if [ ! -d "/etc/letsencrypt/archive/${TELEPORT_DOMAIN_NAME}" ]; then
+ARCHIVE="/etc/letsencrypt/archive/${TELEPORT_DOMAIN_NAME}";
+if [ ! -d "${ARCHIVE}" ]; then
     aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/accounts" /etc/letsencrypt/accounts
     aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/archive" /etc/letsencrypt/archive
     aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/csr" /etc/letsencrypt/csr
     aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/keys" /etc/letsencrypt/keys
     aws s3 sync --exact-timestamps "s3://${TELEPORT_S3_BUCKET}/renewal" /etc/letsencrypt/renewal
 
-    ARCHIVE="/etc/letsencrypt/archive/${TELEPORT_DOMAIN_NAME}";
-    LIVE="/etc/letsencrypt/live/${TELEPORT_DOMAIN_NAME}"
+# Only if archive directory exists, create live directory and make latest archived certificate live.
+    if [ -d "${ARCHIVE}" ]; then
+        LIVE="/etc/letsencrypt/live/${TELEPORT_DOMAIN_NAME}"
+        mkdir -p $LIVE
+        ln -s "$ARCHIVE/$(ls | grep -i ^cert | tail -1)" "$LIVE/cert.pem"
+        ln -s "$ARCHIVE/$(ls | grep -i ^chain | tail -1)" "$LIVE/chain.pem"
+        ln -s "$ARCHIVE/$(ls | grep -i ^fullchain | tail -1)" "$LIVE/fullchain.pem"
+        ln -s "$ARCHIVE/$(ls | grep -i ^privkey | tail -1)" "$LIVE/privkey.pem"
+    fi
 
-    mkdir -p $LIVE
-    pushd $ARCHIVE
-    ln -s "$ARCHIVE/$(ls | grep -i ^cert | tail -1)" "$LIVE/cert.pem"
-    ln -s "$ARCHIVE/$(ls | grep -i ^chain | tail -1)" "$LIVE/chain.pem"
-    ln -s "$ARCHIVE/$(ls | grep -i ^fullchain | tail -1)" "$LIVE/fullchain.pem"
-    ln -s "$ARCHIVE/$(ls | grep -i ^privkey | tail -1)" "$LIVE/privkey.pem"
-    popd
 fi
 
 # This is called periodically, if renewal is successful
