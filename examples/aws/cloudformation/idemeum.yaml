@@ -56,6 +56,11 @@ Parameters:
     Description: Number of days to keep audit events
     Type: Number
     Default: 365
+  
+  KmsKeyId:
+    Description: KMS Key Id to encrypt or decrypt the sensitive data
+    Type: "AWS::SSM::Parameter::Value<String>"
+    Default: "Services/Kms/IdemeumRemoteAccess-CMK-Arn",  
 
 Mappings:
 
@@ -196,6 +201,7 @@ Resources:
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             AUDIT_RETENTION_DAYS=${EventsRetentionDays}
+            KMS_KEY_ID=${KmsKeyId}
             EOF
 
             # Delete existing lock so that new instance can acquire lock.
@@ -293,6 +299,7 @@ Resources:
             USE_LETSENCRYPT=true
             IDEMEUM_TENANT=${Tenant}
             AUDIT_RETENTION_DAYS=${EventsRetentionDays}
+            KMS_KEY_ID=${KmsKeyId}
             EOF
 
             # Generate config and start proxy service

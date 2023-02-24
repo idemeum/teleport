@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/gravitational/teleport"
@@ -579,6 +580,9 @@ type AuthConfig struct {
 
 	// AuditPublisherConfig config to publish the audit events
 	AuditPublisherConfig publisher.AuditPublisherConfig
+
+	// encryption service configuration to encryp the cert authority
+	KMSEncryptionConfig encryption.KMSEncryptionConfig
 }
 
 // SSHConfig configures SSH server node role

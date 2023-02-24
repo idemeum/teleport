@@ -758,6 +758,20 @@ func applyAuditPublisherConfig(fc *FileConfig, cfg *service.Config) error {
 	return nil
 }
 
+func applyEncryptionConfig(fc *FileConfig, cfg *service.Config) error {
+	if fc.Auth.KMSEncryptionConfig == nil {
+		cfg.Auth.KMSEncryptionConfig.Region = ""
+		cfg.Auth.KMSEncryptionConfig.KmsKeyId = ""
+		return nil
+	}
+
+	cfg.Auth.KMSEncryptionConfig.Region = fc.Auth.KMSEncryptionConfig.Region
+	cfg.Auth.KMSEncryptionConfig.KmsKeyId = fc.Auth.KMSEncryptionConfig.KmsKeyId
+	cfg.Auth.KMSEncryptionConfig.ClusterName = cfg.Auth.ClusterName.GetClusterName()
+	cfg.Auth.KMSEncryptionConfig.Enabled = true
+	return nil
+}
+
 // applyProxyConfig applies file configuration for the "proxy_service" section.
 func applyProxyConfig(fc *FileConfig, cfg *service.Config) error {
 	var err error

@@ -42,6 +42,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/gravitational/teleport"
@@ -1513,6 +1514,7 @@ func (process *TeleportProcess) initAuthService() error {
 		Emitter:                 checkingEmitter,
 		Streamer:                events.NewReportingStreamer(checkingStreamer, process.Config.UploadEventsC),
 		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
+		EncryptionService:       encryption.NewEncryptionService(cfg.Auth.KMSEncryptionConfig),
 		TenantUrl:               cfg.TenantUrl,
 		IdemeumPresetsEnabled:   cfg.IdemeumPresetsEnabled,
 	})
