@@ -17,8 +17,10 @@ package local
 import (
 	"context"
 
+	"github.com/cloudflare/cfssl/log"
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/backend"
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/services"
 
 	"github.com/gravitational/trace"
@@ -28,12 +30,22 @@ import (
 // is using local backend
 type CA struct {
 	backend.Backend
+	encryption.ItemEncrypter
 }
 
 // NewCAService returns new instance of CAService
 func NewCAService(b backend.Backend) *CA {
 	return &CA{
-		Backend: b,
+		Backend:       b,
+		ItemEncrypter: encryption.NewItemEncryptionService(nil),
+	}
+}
+
+func NewIdemeumCAService(b backend.Backend, es encryption.EncryptionService) *CA {
+	log.Infof("Initializing CA service with encryption service : %v", es)
+	return &CA{
+		Backend:       b,
+		ItemEncrypter: encryption.NewItemEncryptionService(es),
 	}
 }
 
@@ -52,13 +64,18 @@ func (s *CA) CreateCertAuthority(ca types.CertAuthority) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
+
 	item := backend.Item{
 		Key:     backend.Key(authoritiesPrefix, string(ca.GetType()), ca.GetName()),
 		Value:   value,
 		Expires: ca.Expiry(),
 	}
 
-	_, err = s.Create(context.TODO(), item)
+	encryptedItem, err := s.Encrypt(&item)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	_, err = s.Create(context.TODO(), *encryptedItem)
 	if err != nil {
 		if trace.IsAlreadyExists(err) {
 			return trace.AlreadyExists("cluster %q already exists", ca.GetName())
@@ -88,6 +105,7 @@ func (s *CA) UpsertCertAuthority(ca types.CertAuthority) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
+
 	item := backend.Item{
 		Key:     backend.Key(authoritiesPrefix, string(ca.GetType()), ca.GetName()),
 		Value:   value,
@@ -95,7 +113,11 @@ func (s *CA) UpsertCertAuthority(ca types.CertAuthority) error {
 		ID:      ca.GetResourceID(),
 	}
 
-	_, err = s.Put(context.TODO(), item)
+	encryptedItem, err := s.Encrypt(&item)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	_, err = s.Put(context.TODO(), *encryptedItem)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -116,7 +138,13 @@ func (s *CA) CompareAndSwapCertAuthority(new, expected types.CertAuthority) erro
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	actual, err := services.UnmarshalCertAuthority(actualItem.Value)
+
+	decryptedActualItem, err := s.Decrypt(actualItem)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	actual, err := services.UnmarshalCertAuthority(decryptedActualItem.Value)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -129,13 +157,19 @@ func (s *CA) CompareAndSwapCertAuthority(new, expected types.CertAuthority) erro
 	if err != nil {
 		return trace.Wrap(err)
 	}
+
 	newItem := backend.Item{
 		Key:     key,
 		Value:   newValue,
 		Expires: new.Expiry(),
 	}
 
-	_, err = s.CompareAndSwap(context.TODO(), *actualItem, newItem)
+	encryptedItem, err := s.Encrypt(&newItem)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	_, err = s.CompareAndSwap(context.TODO(), *actualItem, *encryptedItem)
 	if err != nil {
 		if trace.IsCompareFailed(err) {
 			return trace.CompareFailed("cluster %v settings have been updated, try again", new.GetName())
@@ -176,8 +210,13 @@ func (s *CA) ActivateCertAuthority(id types.CertAuthID) error {
 		return trace.Wrap(err)
 	}
 
+	decryptedItem, err := s.Decrypt(item)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
 	certAuthority, err := services.UnmarshalCertAuthority(
-		item.Value, services.WithResourceID(item.ID), services.WithExpires(item.Expires))
+		decryptedItem.Value, services.WithResourceID(decryptedItem.ID), services.WithExpires(decryptedItem.Expires))
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -215,6 +254,7 @@ func (s *CA) DeactivateCertAuthority(id types.CertAuthID) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
+
 	item := backend.Item{
 		Key:     backend.Key(authoritiesPrefix, deactivatedPrefix, string(id.Type), id.DomainName),
 		Value:   value,
@@ -222,7 +262,11 @@ func (s *CA) DeactivateCertAuthority(id types.CertAuthID) error {
 		ID:      certAuthority.GetResourceID(),
 	}
 
-	_, err = s.Put(context.TODO(), item)
+	encryptedItem, err := s.Encrypt(&item)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	_, err = s.Put(context.TODO(), *encryptedItem)
 	if err != nil {
 		return trace.Wrap(err)
 	}
@@ -240,8 +284,14 @@ func (s *CA) GetCertAuthority(ctx context.Context, id types.CertAuthID, loadSign
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
+
+	decryptedItem, err := s.Decrypt(item)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
 	ca, err := services.UnmarshalCertAuthority(
-		item.Value, services.AddOptions(opts, services.WithResourceID(item.ID), services.WithExpires(item.Expires))...)
+		decryptedItem.Value, services.AddOptions(opts, services.WithResourceID(decryptedItem.ID), services.WithExpires(decryptedItem.Expires))...)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -276,10 +326,14 @@ func (s *CA) GetCertAuthorities(ctx context.Context, caType types.CertAuthType, 
 	// Marshal values into a []types.CertAuthority slice.
 	cas := make([]types.CertAuthority, len(result.Items))
 	for i, item := range result.Items {
+		decryptedItem, err := s.Decrypt(&item)
+		if err != nil {
+			return nil, trace.Wrap(err)
+		}
 		ca, err := services.UnmarshalCertAuthority(
-			item.Value, services.AddOptions(opts,
-				services.WithResourceID(item.ID),
-				services.WithExpires(item.Expires))...)
+			decryptedItem.Value, services.AddOptions(opts,
+				services.WithResourceID(decryptedItem.ID),
+				services.WithExpires(decryptedItem.Expires))...)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}

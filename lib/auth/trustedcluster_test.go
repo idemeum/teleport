@@ -23,6 +23,7 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	authority "github.com/gravitational/teleport/lib/auth/testauthority"
 	"github.com/gravitational/teleport/lib/backend/memory"
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/suite"
 
@@ -282,6 +283,7 @@ func newTestAuthServer(ctx context.Context, t *testing.T, name ...string) *Serve
 		ClusterName:            clusterNameRes,
 		Backend:                bk,
 		Authority:              authority.New(),
+		EncryptionService:      &encryption.TestEncryptionService{},
 		SkipPeriodicOperations: true,
 	}
 	a, err := NewServer(authConfig)

@@ -41,6 +41,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/coreos/go-oidc/jose"
@@ -102,7 +103,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 	}
 
 	if cfg.Trust == nil {
-		cfg.Trust = local.NewCAService(cfg.Backend)
+		cfg.Trust = local.NewIdemeumCAService(cfg.Backend, cfg.EncryptionService)
 	}
 	if cfg.Presence == nil {
 		cfg.Presence = local.NewIdemeumPresenceService(cfg.Backend, cfg.AppPublisher)
@@ -212,6 +213,7 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		getClaimsFun:           getClaims,
 		inventory:              inventory.NewController(cfg.Presence),
 		AppPublisher:           cfg.AppPublisher,
+		EncryptionService:      cfg.EncryptionService,
 		RemoteAccessAppWatcher: publisher.NewIdemeumRemoteResourceWatcher(context.Background(), cfg.Events, cfg.AppPublisher),
 	}
 	for _, o := range opts {
@@ -385,6 +387,7 @@ type Server struct {
 
 	AppPublisher           publisher.AppPublisher
 	RemoteAccessAppWatcher *publisher.RemoteAccessAppWatcher
+	EncryptionService      encryption.EncryptionService
 }
 
 func (a *Server) CloseContext() context.Context {

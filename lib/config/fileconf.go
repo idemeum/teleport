@@ -720,6 +720,8 @@ type Auth struct {
 	AppPublisherConfig *AppPublisherConfig `yaml:"app_publisher_config,omitempty"`
 
 	AuditPublisherConfig *AuditPublisherConfig `yaml:"audit_publisher_config,omitempty"`
+
+	KMSEncryptionConfig *KMSEncryptionConfig `yaml:"kms_encryption_config,omitempty"`
 }
 
 type AppPublisherConfig struct {
@@ -734,6 +736,11 @@ type AuditPublisherConfig struct {
 	Region       string `yaml:"region,omitempty"`
 	// EventTypes audit event types are published using this publisher.
 	EventTypes apiutils.Strings `yaml:"event_types,omitempty"`
+}
+
+type KMSEncryptionConfig struct {
+	Region   string `yaml:"region,omitempty"`
+	KmsKeyId string `yaml:"km_key_id,omitempty"`
 }
 
 // CAKeyParams configures how CA private keys will be created and stored.

@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/publisher"
 
 	"github.com/gravitational/teleport"
@@ -175,6 +176,8 @@ type InitConfig struct {
 
 	//App Publisher
 	AppPublisher publisher.AppPublisher
+
+	EncryptionService encryption.EncryptionService
 
 	TenantUrl string
 	//Apply idemeum presets
@@ -397,6 +400,12 @@ func Init(cfg InitConfig, opts ...ServerOption) (*Server, error) {
 
 	// Migrate any legacy resources to new format.
 	err = migrateLegacyResources(ctx, asrv)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	//TODO: Remove this code once the teleport new code has been deployed
+	err = encryptCertAuthorities(ctx, asrv)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -1101,6 +1110,83 @@ func migrateCertAuthorities(ctx context.Context, asrv *Server) error {
 		return trace.Errorf("fail to migrate certificate authorities to the v7 storage format")
 	}
 	return nil
+}
+
+func encryptCertAuthorities(ctx context.Context, asrv *Server) error {
+	var errors []error
+
+	for _, caType := range []types.CertAuthType{types.HostCA, types.UserCA, types.JWTSigner} {
+		startKey := backend.Key("authorities", string(caType))
+		result, err := asrv.bk.GetRange(ctx, startKey, backend.RangeEnd(startKey), backend.NoLimit)
+		if err != nil {
+			return trace.Wrap(err)
+		}
+
+		for _, item := range result.Items {
+			if err := encryptCertAuthority(asrv, item); err != nil {
+				errors = append(errors, trace.Wrap(err, "failed to encrypt key %v", item.Key, err))
+				continue
+			}
+		}
+	}
+	if len(errors) > 0 {
+		log.Errorf("Failed to encrypt certificate authorities")
+		for _, err := range errors {
+			log.Errorf("    %v", err)
+		}
+		return trace.Errorf("fail to encrypt certificate authorities")
+	}
+
+	return nil
+}
+
+func encryptCertAuthority(asrv *Server, item backend.Item) error {
+	encryptedValue, err := encryption.ToEncryptedValue(item.Value)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+	if encryptedValue.Encrypted {
+		log.Infof("Cert authority:%v already encrypted, skipping it", item.Key)
+		return nil
+	}
+
+	itemEncrypter := encryption.NewItemEncryptionService(asrv.EncryptionService)
+
+	newItem, err := itemEncrypter.Encrypt(&item)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	log.Infof("Cert authority :%v encrypted", string(item.Key))
+
+	_, err = asrv.bk.Put(context.TODO(), *newItem)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	decryptedItem, err := itemEncrypter.Decrypt(newItem)
+
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	beforeEncryptCA, err := services.UnmarshalCertAuthority(item.Value)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	afterEncryptCA, err := services.UnmarshalCertAuthority(decryptedItem.Value)
+	if err != nil {
+		return trace.Wrap(err)
+	}
+
+	if !services.CertAuthoritiesEquivalent(beforeEncryptCA, afterEncryptCA) {
+		return trace.CompareFailed("cluster %v settings have been updated, try again", beforeEncryptCA.GetName())
+	}
+	log.Infof("Verified the cert authority to ensure the CA cert should match with old one")
+
+	return nil
+
 }
 
 // migrateDBAuthority copies Host CA as Database CA. Before v9.0 database access was using host CA to sign all

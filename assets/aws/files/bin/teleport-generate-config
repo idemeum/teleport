@@ -276,6 +276,7 @@ auth_service:
   app_publisher_config:
     enabled: true
     region: ${EC2_REGION}
+
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
@@ -489,6 +490,9 @@ auth_service:
   app_publisher_config:
     enabled: true
     region: ${EC2_REGION}
+  kms_encryption_config:
+    region: ${EC2_REGION}
+    kms_key_id: ${KMS_KEY_ID}   
   cluster_name: ${TELEPORT_CLUSTER_NAME}
 EOF
 
