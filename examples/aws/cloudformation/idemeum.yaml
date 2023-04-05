@@ -56,11 +56,11 @@ Parameters:
     Description: Number of days to keep audit events
     Type: Number
     Default: 365
-  
+
   KmsKeyId:
     Description: KMS Key Id to encrypt or decrypt the sensitive data
     Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "Services/Kms/IdemeumRemoteAccess-CMK-Arn",  
+    Default: "/Services/Kms/IdemeumRemoteAccess-CMK-Arn" 
 
 Mappings:
 
@@ -73,10 +73,10 @@ Mappings:
       GitHash: c8292bf0e
       APSOUTH1: ami-0a6b70e42325a0f43
       USAWEST2: ami-0c9751938ad39c74e
-    1.0.0.5cde3fe13: 
+    1.0.0.5cde3fe13:
       GitHash: 5cde3fe13
       APSOUTH1: ami-0ffb7b768c7c61503
-      USAWEST2: ami-0ae8183f2c6cdeb59 
+      USAWEST2: ami-0ae8183f2c6cdeb59
     1.0.0.92ade14d5:
       GitHash: 92ade14d5
       APSOUTH1: ami-000f395c1aa509e9f
@@ -1148,7 +1148,7 @@ Resources:
         - Key: VantaOwner
           Value: goprean@idemeum.com
         - Key: VantaNoAlert
-          Value: 'Will not create read/write monitoring alarms for this table.'          
+          Value: 'Will not create read/write monitoring alarms for this table.'
   # Bucket is used to publish letsencrypt certs
   # and store recorded SSH sessions
   Bucket:
