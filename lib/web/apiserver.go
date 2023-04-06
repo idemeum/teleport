@@ -313,6 +313,9 @@ func NewHandler(cfg Config, opts ...HandlerOption) (*APIHandler, error) {
 	h.POST("/webapi/sessions/renew", h.WithAuth(h.renewSession))
 	// idemeum session
 	h.POST("/webapi/sessions/idemeum", httplib.MakeHandler(h.createSessionForIdemeumServiceToken))
+	
+	// idemeum logout
+	h.POST("/webapi/idp/logout", h.WithAuth(h.idemeumLogout))
 
 	h.GET("/webapi/rootcerts", h.WithAuth(h.getRootCertificates))
 
@@ -1670,6 +1673,65 @@ func (h *Handler) createSessionForIdemeumServiceToken(w http.ResponseWriter, r *
 		return nil, trace.AccessDenied("need auth")
 	}
 	return newSessionResponse(ctx)
+}
+
+type IdemeumServiceLogoutRequest struct {
+	// the user that is loging out of idemeum. It is mandatory.
+	UserId string `json:"userId"`
+
+	// the device that the user is logging out from. The user can be logged in to multiple devices (phone, computer).
+	// We should only invalidate the teleport sessions corresponding to the device id. If not passed in, then we will invalidate all
+	// the user sessions on teleport
+	DeviceId string `json:"deviceId"`
+
+	// the jwt token id that was used to authenticate the user to idemeum. It is optional. If it is not passed in, then we will remove
+	// all the user's sessions.
+	TokenId string `json:"tokenId"`
+}
+
+func (h *Handler) idemeumLogout(w http.ResponseWriter, r *http.Request, params httprouter.Params, ctx *SessionContext) (interface{}, error) {
+	// this is an authenticated call, but make sure only idemeum system user can execute this call
+	if ctx.GetUser() != "system" {
+		h.log.Warnf("User %v is making call to logout users", ctx.GetUser())
+		return nil, trace.AccessDenied("Not allowed to execute the logout operation")
+	}
+
+	req := IdemeumServiceLogoutRequest{}
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if req.UserId == "" {
+		return nil, trace.BadParameter("Failed to logout user from teleport: Missing 'userId' field")
+	}
+
+	h.log.Infof("User %v logged out of idemeum. Invalidating all the sessions.", req.UserId)
+
+	// get all the active sessions for (userId/deviceId/tokenId combination)
+	userSessions, err := h.auth.GetUserSessions(r.Context(), req.UserId, req.DeviceId, req.TokenId)
+
+	if err != nil {
+		h.log.Errorf("Failed to get the sessions for user %v.", req.UserId)
+		h.log.Error(err)
+		return nil, trace.Wrap(err)
+	}
+
+	// go over each web session and invalidate it
+	for _, userSession := range userSessions {
+		sessionContext, err := h.auth.getContext(userSession.GetUser(), userSession.GetName())
+		if err != nil {
+			h.log.Infof("Could not find the session context for user %v with session id %v", userSession.GetUser(), userSession.GetName())
+			continue
+		}
+
+		h.log.Debugf("Found the session with id %v so invalidate it", userSession.GetName())
+		err = sessionContext.Invalidate()
+		if err != nil {
+			h.log.Warnf("Could not invalidat the session with id %v. Reason %v", userSession.GetName(), err)
+		}
+	}
+
+	return OK(), nil
 }
 
 type RootCertificates struct {

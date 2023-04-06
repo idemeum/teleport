@@ -1059,6 +1059,41 @@ func (c *Client) ValidateIdemeumServiceToken(ctx context.Context, ServiceToken s
 	return services.UnmarshalWebSession(out.Bytes())
 }
 
+func (c *Client) GetUserSessions(ctx context.Context, UserId string, DeviceId string, TokenId string) ([]types.WebSession, error) {
+	log.Debugf("Getting the sessions for user %v ", UserId)
+	response, err := c.PostJSON(ctx, c.Endpoint("user", "sessions"), UserSesssionsRequest{
+		UserId:   UserId,
+		DeviceId: DeviceId,
+		TokenId:  TokenId})
+
+	if err != nil {
+		log.Errorf("Failed to get the sessions for user %v", UserId)
+		return nil, trace.Wrap(err)
+	}
+	log.Debugf("Request user/sessions completed with code: %v \n", response.Code())
+
+	var sessionResponse UserSessionsResponse
+	if err := json.Unmarshal(response.Bytes(), &sessionResponse); err != nil {
+		log.Error(err)
+		return nil, trace.Wrap(err)
+	}
+
+	log.Infof("Found %v user sessions ", len(sessionResponse.Sessions))
+	webSessions := make([]types.WebSession, 0, len(sessionResponse.Sessions))
+
+	for _, rawSession := range sessionResponse.Sessions {
+		webSession, err := services.UnmarshalWebSession(rawSession)
+		if err != nil {
+			log.Infof("Cannot deserialize session %v. Ignoring it", rawSession)
+			continue
+		}
+
+		webSessions = append(webSessions, webSession)
+	}
+
+	return webSessions, nil
+}
+
 // ValidateGithubAuthCallback validates Github auth callback returned from redirect
 func (c *Client) ValidateGithubAuthCallback(ctx context.Context, q url.Values) (*GithubAuthResponse, error) {
 	out, err := c.PostJSON(ctx, c.Endpoint("github", "requests", "validate"),
@@ -1668,6 +1703,9 @@ type IdentityService interface {
 
 	// ValidateIdemeumServiceToken creates  idemeum service user from the validated service token
 	ValidateIdemeumServiceToken(ctx context.Context, ServiceToken string, tenantUrl string) (types.WebSession, error)
+
+	// returns all the active sessions for the user
+	GetUserSessions(ctx context.Context, UserId string, DeviceId string, TokenId string) ([]types.WebSession, error)
 }
 
 // ProvisioningService is a service in control

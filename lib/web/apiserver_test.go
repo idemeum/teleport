@@ -3300,6 +3300,112 @@ func TestParseSSORequestParams(t *testing.T) {
 	}
 }
 
+func TestCannotLogoutFromIdpForNonSystemUser(t *testing.T) {
+	t.Parallel()
+	env := newWebPack(t, 1)
+	proxy := env.proxies[0]
+
+	pack := proxy.authPack(t, "nonsystem-user@example.com")
+
+	endpoint := pack.clt.Endpoint("webapi", "idp", "logout")
+	_, err := pack.clt.PostJSON(context.Background(), endpoint, &IdemeumServiceLogoutRequest{
+		UserId: "someIdemeumUserThatLoggedOut",
+	})
+	require.Error(t, err)
+	require.True(t, trace.IsAccessDenied(err))
+}
+
+func TestCannotLogoutFromIdpBySystemUserWhenNoUserIdIsPassed(t *testing.T) {
+	t.Parallel()
+	env := newWebPack(t, 1)
+	proxy := env.proxies[0]
+
+	pack := proxy.authPack(t, "system")
+
+	endpoint := pack.clt.Endpoint("webapi", "idp", "logout")
+	_, err := pack.clt.PostJSON(context.Background(), endpoint, &IdemeumServiceLogoutRequest{
+		DeviceId: "someDeviceId",
+		TokenId: "someTokenId",
+	})
+	require.Error(t, err)
+	require.True(t, trace.IsBadParameter(err))
+}
+
+func TestWillInvalidateSessionsForUsersWhenLoggingOutFromIdemeum(t *testing.T) {
+	env := newWebPack(t, 1)
+
+	const idemeumUserId = "a-idemeum-user"
+
+	proxy := env.proxies[0]
+	pack := proxy.authPack(t, idemeumUserId)
+
+	// Register multiple applications.
+	applications := []struct {
+		name       string
+		publicAddr string
+	}{
+		{name: "panel", publicAddr: "panel.example.com"},
+		{name: "admin", publicAddr: "admin.example.com"},
+		{name: "metrics", publicAddr: "metrics.example.com"},
+	}
+
+	// Register and create a session for each application.
+	for _, application := range applications {
+		// Register an application.
+		app, err := types.NewAppV3(types.Metadata{
+			Name: application.name,
+		}, types.AppSpecV3{
+			URI:        "localhost",
+			PublicAddr: application.publicAddr,
+		})
+		require.NoError(t, err)
+		server, err := types.NewAppServerV3FromApp(app, "host", uuid.New().String())
+		require.NoError(t, err)
+		_, err = env.server.Auth().UpsertApplicationServer(context.Background(), server)
+		require.NoError(t, err)
+
+		// Create application session
+		endpoint := pack.clt.Endpoint("webapi", "sessions", "app")
+		_, err = pack.clt.PostJSON(context.Background(), endpoint, &CreateAppSessionRequest{
+			FQDNHint:    application.publicAddr,
+			PublicAddr:  application.publicAddr,
+			ClusterName: "localhost",
+		})
+		require.NoError(t, err)
+	}
+
+	// List sessions, should have one for each application.
+	sessions, err := proxy.client.GetAppSessions(context.Background())
+	require.NoError(t, err)
+	require.Len(t, sessions, len(applications))
+
+	// should be able to make an authenticated call: we will be using /webapi/sites
+	sitesEndpoint := pack.clt.Endpoint("webapi", "sites")
+	_, err = pack.clt.Get(context.Background(), sitesEndpoint, url.Values{})
+	require.NoError(t, err)
+
+	// create the system user authentication
+	systemPack := proxy.authPack(t, "system")
+
+	// Logout from idemeum
+	endpoint := systemPack.clt.Endpoint("webapi", "idp", "logout")
+	response, err := systemPack.clt.PostJSON(context.Background(), endpoint, &IdemeumServiceLogoutRequest{
+		UserId: idemeumUserId,
+	})
+	require.NoError(t, err)
+	require.Equal(t, response.Code(), 200)
+
+	// Check sessions after logout, should be empty.
+	sessions, err = proxy.client.GetAppSessions(context.Background())
+	require.NoError(t, err)
+	require.Len(t, sessions, 0)
+
+	// should not be able to call an authenticated endpoint
+	_, err = pack.clt.Get(context.Background(), sitesEndpoint, url.Values{})
+	require.Error(t, err)
+	require.True(t, trace.IsAccessDenied(err))
+}
+
 type authProviderMock struct {
 	server types.ServerV2
 }

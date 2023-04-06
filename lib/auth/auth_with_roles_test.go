@@ -1133,6 +1133,7 @@ func TestRoleRequestDenyReimpersonation(t *testing.T) {
 	ctx := context.Background()
 	srv := newTestTLSServer(t)
 
+	
 	accessFooRole, err := CreateRole(ctx, srv.Auth(), "test-access-foo", types.RoleSpecV5{
 		Allow: types.RoleConditions{
 			Logins: []string{"foo"},
@@ -3446,4 +3447,82 @@ func TestListResources_WithRoles(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetUserSessionsWithUserIdOnly(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	srv := newTestTLSServer(t)
+	
+	const (
+		user1 = "user1"
+	    user2 = "user2"
+	    user3 = "user3"
+	)
+
+	// create some user web sessions
+	CreateUser(srv.Auth(), user1)
+
+	// for user1 create 2 web sessions
+	srv.Auth().CreateWebSession(user1);
+	srv.Auth().CreateWebSession(user1);
+	
+	CreateUser(srv.Auth(), user2)
+	srv.Auth().CreateWebSession(user2);
+
+	CreateUser(srv.Auth(), user3)
+	srv.Auth().CreateWebSession(user3);
+
+	webSessions, errr := srv.Auth().GetUserSessions(ctx, user1, "", "")
+
+	// should have 2 web sessions for user1
+	require.NoError(t, errr)
+	require.Equal(t, len(webSessions), 2)
+
+	// make sure each of the sessions are for user1
+	for _, session := range webSessions {
+		require.Equal(t, session.GetUser(), user1)
+	} 
+}
+
+func TestGetUserSessionsWithUserIdDeviceIdAndTokenId(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	srv := newTestTLSServer(t)
+	
+	const (
+		user1 = "user1"
+	    deviceId = "deviceId1"
+	    tokenId = "tokenId1"
+		)
+
+	sessionIdpIndex := user1 + "#" + deviceId + "#" + tokenId
+
+	// create some user web sessions
+	CreateUser(srv.Auth(), user1)
+
+	// for user1 create 2 web sessions
+	srv.Auth().createWebSession(ctx, types.NewWebSessionRequest {
+		User: user1,
+		IDPSessionIndex: sessionIdpIndex,
+	})
+
+	srv.Auth().createWebSession(ctx, types.NewWebSessionRequest {
+		User: user1,
+		IDPSessionIndex: sessionIdpIndex,
+	})
+
+	// one user without the session idp index
+	srv.Auth().CreateWebSession(user1);
+	
+	webSessions, errr := srv.Auth().GetUserSessions(ctx, user1, deviceId, tokenId)
+
+	// should have 2 web sessions for user1
+	require.NoError(t, errr)
+	require.Equal(t, len(webSessions), 2)
+
+	// make sure each of the sessions are for user1
+	for _, session := range webSessions {
+		require.Equal(t, session.GetUser(), user1)
+	} 
 }

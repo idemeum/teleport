@@ -65,7 +65,7 @@ func newKMSEncryptionService(cfg KMSEncryptionConfig) EncryptionService {
 	}))
 
 	kmsService := kms.New(session)
-	log.Info("Initialized the sqs app publisher service")
+	log.Info("Initialized the kms encryption service")
 	return &kmsEncryptionService{kmsService, cfg}
 }
 

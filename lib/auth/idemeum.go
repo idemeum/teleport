@@ -154,3 +154,44 @@ func (a *Server) createIdemeumUser(p *createUserParams) (types.User, error) {
 
 	return user, nil
 }
+
+// returns all the active sessions for the user
+func (a *Server) GetUserSessions(ctx context.Context, UserId string, DeviceId string, TokenId string) ([]types.WebSession, error) {
+	log.Infof("Getting all the user's sessions for user %v", UserId)
+	allWebSessions, err := a.Identity.WebSessions().List(ctx)
+
+	if err != nil {
+		log.WithError(err).Errorf("Failed to get user's sessions. Reason: %v", err)
+		return nil, trace.Wrap(err)
+	}
+
+	log.Infof("Found %v sessions", len(allWebSessions))
+
+	// filter only the user id sessions. If the DeviceId and TokenId are passed in then form the saml idp index and filter it by that.
+	// If only the userId is passed in then, we will only filter by userId
+	var ipdSessionIndex = ""
+	if DeviceId != "" && TokenId != "" {
+		ipdSessionIndex = UserId + "#" + DeviceId + "#" + TokenId
+		log.Infof("Using the session index: %v", ipdSessionIndex)
+	}
+
+	log.Infof("Parsing the user sessions just for the user %v", UserId)
+	userSessions := make([]types.WebSession, 0)
+	for _, session := range allWebSessions {
+		if session.GetUser() != UserId {
+			continue
+		}
+
+		// if the idp session index is set then filter by idp session index
+		if ipdSessionIndex != "" && session.GetIDPSessionIndex() != ipdSessionIndex {
+			continue
+		}
+
+		// found one use session that we need to invalidate so keep it
+		userSessions = append(userSessions, session)
+	}
+
+	log.Infof("Found %v user sessions for user %v", len(userSessions), UserId)
+	return userSessions, nil
+}
+

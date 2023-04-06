@@ -62,6 +62,10 @@ func (a *ServerWithRoles) ValidateIdemeumServiceToken(ctx context.Context, Servi
 	return a.authServer.ValidateIdemeumServiceToken(ctx, ServiceToken, TenantUrl)
 }
 
+func (a *ServerWithRoles) GetUserSessions(ctx context.Context, UserId string, DeviceId string, TokenId string) ([]types.WebSession, error) {
+	return a.authServer.GetUserSessions(ctx, UserId, DeviceId, TokenId)
+}
+
 // CloseContext is closed when the auth server shuts down
 func (a *ServerWithRoles) CloseContext() context.Context {
 	return a.authServer.closeCtx

@@ -163,6 +163,7 @@ func NewAPIServer(config *APIConfig) (http.Handler, error) {
 	srv.GET("/:version/namespaces/:namespace/sessions/:id", srv.withAuth(srv.getSession))
 	srv.GET("/:version/namespaces/:namespace/sessions/:id/stream", srv.withAuth(srv.getSessionChunk))
 	srv.GET("/:version/namespaces/:namespace/sessions/:id/events", srv.withAuth(srv.getSessionEvents))
+	srv.POST("/:version/user/sessions", srv.withAuth(srv.getUserSessions))
 
 	// Namespaces
 	srv.POST("/:version/namespaces", srv.withAuth(srv.upsertNamespace))
@@ -992,6 +993,48 @@ func (s *APIServer) getSession(auth ClientI, w http.ResponseWriter, r *http.Requ
 		return nil, trace.Wrap(err)
 	}
 	return se, nil
+}
+
+func (s *APIServer) getUserSessions(auth ClientI, w http.ResponseWriter, r *http.Request, p httprouter.Params, version string) (interface{}, error) {
+	log.Info("Getting all the user sessions")
+	var req *UserSesssionsRequest
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	sessions, err := auth.GetUserSessions(r.Context(), req.UserId, req.DeviceId, req.TokenId)
+	if err != nil {
+		log.Error("Failed to get the user sessions")
+		return nil, trace.Wrap(err)
+	}
+
+	rawSessions := make([]json.RawMessage, len(sessions))
+
+	for i, session := range sessions {
+		rawSession, err := services.MarshalWebSession(session, services.WithVersion(version))
+		if err != nil {
+			log.Infof("Failed to serialized session %v. Ignoring it", session.GetName())
+			continue
+		}
+		rawSessions[i] = rawSession
+	}
+
+	userSessions := UserSessionsResponse{
+		Sessions: rawSessions,
+	}
+
+	return &userSessions, nil
+}
+
+
+type UserSesssionsRequest struct {
+	UserId   string
+	DeviceId string
+	TokenId  string
+}
+
+type UserSessionsResponse struct {
+	Sessions []json.RawMessage `json:"sessions"`
 }
 
 type createOIDCAuthRequestReq struct {

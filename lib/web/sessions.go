@@ -604,6 +604,13 @@ func (s *sessionCache) ValidateServiceToken(ctx context.Context, ServiceToken st
 	return s.proxyClient.ValidateIdemeumServiceToken(ctx, ServiceToken, TenantUrl)
 }
 
+func (s *sessionCache) GetUserSessions(ctx context.Context, UserId string, DeviceId string, TokenId string) ([]types.WebSession, error) {
+	log.Infof("Getting the active sessions for user %v from device %v for token %v", UserId, DeviceId, TokenId)
+
+	//get all the active sessions for ths user
+	return s.proxyClient.GetUserSessions(ctx, UserId, DeviceId, TokenId)
+}
+
 // GetCertificateWithoutOTP returns a new user certificate for the specified request.
 func (s *sessionCache) GetCertificateWithoutOTP(
 	c client.CreateSSHCertReq, clientMeta *auth.ForwardedClientMetadata,
