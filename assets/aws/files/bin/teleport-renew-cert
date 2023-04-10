@@ -28,12 +28,14 @@ if [ ! -d "${ARCHIVE}" ]; then
 
 # Only if archive directory exists, create live directory and make latest archived certificate live.
     if [ -d "${ARCHIVE}" ]; then
+        pushd "${ARCHIVE}"
         LIVE="/etc/letsencrypt/live/${TELEPORT_DOMAIN_NAME}"
         mkdir -p $LIVE
         ln -s "$ARCHIVE/$(ls | grep -i ^cert | tail -1)" "$LIVE/cert.pem"
         ln -s "$ARCHIVE/$(ls | grep -i ^chain | tail -1)" "$LIVE/chain.pem"
         ln -s "$ARCHIVE/$(ls | grep -i ^fullchain | tail -1)" "$LIVE/fullchain.pem"
         ln -s "$ARCHIVE/$(ls | grep -i ^privkey | tail -1)" "$LIVE/privkey.pem"
+        popd
     fi
 
 fi
