@@ -23,6 +23,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/constants"
@@ -274,8 +275,18 @@ func (a *Server) calculateSAMLUser(diagCtx *ssoDiagContext, connector types.SAML
 	roleTTL := roles.AdjustSessionTTL(apidefaults.MaxCertDuration)
 	p.sessionTTL = utils.MinTTL(roleTTL, request.CertTTL)
 
+	// if there is a session ttl set on the saml assertion then use that one
+	now := time.Now().UTC()
+	if now.Before(*assertionInfo.SessionNotOnOrAfter) {
+		log.Debugf("Session not valid on or after %v", assertionInfo.SessionNotOnOrAfter.UnixMilli())
+		p.sessionTTL = utils.MinTTL(assertionInfo.SessionNotOnOrAfter.Sub(now), p.sessionTTL)	
+
+		log.Debugf("Current session ttl is %v millis", p.sessionTTL.Milliseconds())
+	}
+
 	return &p, nil
 }
+
 
 func (a *Server) createSAMLUser(p *createUserParams, dryRun bool) (types.User, error) {
 	expires := a.GetClock().Now().UTC().Add(p.sessionTTL)
