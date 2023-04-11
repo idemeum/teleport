@@ -656,6 +656,10 @@ func applyAuthConfig(fc *FileConfig, cfg *service.Config) error {
 	if err := applyAuditPublisherConfig(fc, cfg); err != nil {
 		return trace.Wrap(err)
 	}
+
+	if err := applyEncryptionConfig(fc, cfg); err != nil {
+		return trace.Wrap(err)
+	}
 	return nil
 }
 
