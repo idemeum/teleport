@@ -740,7 +740,7 @@ type AuditPublisherConfig struct {
 
 type KMSEncryptionConfig struct {
 	Region   string `yaml:"region,omitempty"`
-	KmsKeyId string `yaml:"km_key_id,omitempty"`
+	KmsKeyId string `yaml:"kms_key_id,omitempty"`
 }
 
 // CAKeyParams configures how CA private keys will be created and stored.

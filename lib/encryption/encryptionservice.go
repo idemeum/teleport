@@ -45,7 +45,7 @@ func (cfg *KMSEncryptionConfig) CheckAndSetDefaults() error {
 func NewEncryptionService(config KMSEncryptionConfig) EncryptionService {
 	config.CheckAndSetDefaults()
 	if config.Enabled {
-		log.Info("Encryption service enabled")
+		log.Infof("Encryption service enabled for cluster: %v", config.ClusterName)
 		return newKMSEncryptionService(config)
 	}
 
@@ -59,7 +59,7 @@ type kmsEncryptionService struct {
 }
 
 func newKMSEncryptionService(cfg KMSEncryptionConfig) EncryptionService {
-	log.Info("Initializing the kms server")
+	log.Info("Initializing the kms service")
 	session := session.Must(session.NewSession(&aws.Config{
 		Region: &cfg.Region,
 	}))
