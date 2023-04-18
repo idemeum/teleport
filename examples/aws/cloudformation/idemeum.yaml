@@ -944,6 +944,13 @@ Resources:
             Resource: !Join ["/", ["arn:aws:route53:::hostedzone", '{{resolve:ssm:/Services/Route53/RemoteAccessHostedZoneID}}']]
             Action:
             - "route53:ChangeResourceRecordSets"
+          # Allow auth server to use KMS service for data encryption
+          -
+            Effect: "Allow"
+            Resource: '{{resolve:ssm:/Services/Kms/IdemeumRemoteAccess-CMK-Arn}}'
+            Action:
+            - "kms:GenerateDataKey"
+            - "kms:Decrypt"
       Roles:
       - {Ref: AuthRole}
 

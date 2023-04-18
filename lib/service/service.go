@@ -44,6 +44,7 @@ import (
 
 	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/publisher"
+	"github.com/siddontang/go/log"
 
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client"
@@ -1482,6 +1483,17 @@ func (process *TeleportProcess) initAuthService() error {
 		return trace.Wrap(err)
 	}
 
+	dekService := encryption.NewDataEncryptionKeyService(cfg.Auth.KMSEncryptionConfig, b)
+	if dekService != nil {
+		err = dekService.Init()
+		if err != nil {
+			log.Infof("Failed to initialize data encryption key service")
+			return trace.Wrap(err)
+		}
+	} else {
+		log.Info("skipping data encryption key service initialization, as its disabled.")
+	}
+
 	// first, create the AuthServer
 	authServer, err := auth.Init(auth.InitConfig{
 		Backend:                 b,
@@ -1514,7 +1526,7 @@ func (process *TeleportProcess) initAuthService() error {
 		Emitter:                 checkingEmitter,
 		Streamer:                events.NewReportingStreamer(checkingStreamer, process.Config.UploadEventsC),
 		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
-		EncryptionService:       encryption.NewEncryptionService(cfg.Auth.KMSEncryptionConfig),
+		EncryptionService:       encryption.NewEncryptionService(dekService),
 		TenantUrl:               cfg.TenantUrl,
 		IdemeumPresetsEnabled:   cfg.IdemeumPresetsEnabled,
 	})

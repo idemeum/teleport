@@ -773,6 +773,7 @@ func applyEncryptionConfig(fc *FileConfig, cfg *service.Config) error {
 	cfg.Auth.KMSEncryptionConfig.KmsKeyId = fc.Auth.KMSEncryptionConfig.KmsKeyId
 	cfg.Auth.KMSEncryptionConfig.ClusterName = cfg.Auth.ClusterName.GetClusterName()
 	cfg.Auth.KMSEncryptionConfig.Enabled = true
+	log.Infof("Enabled the kms encryption for auth service cluster: %v", cfg.Auth.ClusterName.GetClusterName())
 	return nil
 }
 

@@ -28,7 +28,6 @@ import (
 	"github.com/gravitational/teleport/api/types"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/backend/lite"
-	"github.com/gravitational/teleport/lib/encryption"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/suite"
 
@@ -140,7 +139,8 @@ func (r *ResourceSuite) TestCertAuthorityResource(c *check.C) {
 	// Check basic dynamic item creation
 	r.runCreationChecks(c, userCA, hostCA)
 	// Check that dynamically created item is compatible with service
-	s := NewIdemeumCAService(r.bk, encryption.NewEncryptionService(encryption.KMSEncryptionConfig{}))
+
+	s := NewCAService(r.bk)
 	err := s.CompareAndSwapCertAuthority(userCA, userCA)
 	c.Assert(err, check.IsNil)
 }
