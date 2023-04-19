@@ -420,7 +420,7 @@ const (
 	globalTshConfigEnvVar  = "TELEPORT_GLOBAL_TSH_CONFIG"
 	mfaModeEnvVar          = "TELEPORT_MFA_MODE"
 
-	clusterHelp = "Specify the Teleport cluster to connect"
+	clusterHelp = "Specify the Remote Access server to connect"
 	browserHelp = "Set to 'none' to suppress browser opening on login"
 	searchHelp  = `List of comma separated search keywords or phrases enclosed in quotations (e.g. --search=foo,bar,"some phrase")`
 	queryHelp   = `Query by predicate language enclosed in single quotes. Supports ==, !=, &&, and || (e.g. --query='labels["key1"] == "value1" && labels["key2"] != "value2"')`
@@ -453,14 +453,14 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	var cpuProfile, memProfile string
 
 	// configure CLI argument parser:
-	app := utils.InitCLIParser("tsh", "Teleport Command Line Client").Interspersed(false)
+	app := utils.InitCLIParser("tsh", "Idemeum Command Line Client").Interspersed(false)
 	app.Flag("login", "Remote host login").Short('l').Envar(loginEnvVar).StringVar(&cf.NodeLogin)
-	localUser, _ := client.Username()
+	// localUser, _ := client.Username()
 	app.Flag("proxy", "SSH proxy address").Envar(proxyEnvVar).StringVar(&cf.Proxy)
-	app.Flag("nocache", "do not cache cluster discovery locally").Hidden().BoolVar(&cf.NoCache)
-	app.Flag("user", fmt.Sprintf("SSH proxy user [%s]", localUser)).Envar(userEnvVar).StringVar(&cf.Username)
-	app.Flag("mem-profile", "Write memory profile to file").Hidden().StringVar(&memProfile)
-	app.Flag("cpu-profile", "Write CPU profile to file").Hidden().StringVar(&cpuProfile)
+	// app.Flag("nocache", "do not cache cluster discovery locally").Hidden().BoolVar(&cf.NoCache)
+	// app.Flag("user", fmt.Sprintf("SSH proxy user [%s]", localUser)).Envar(userEnvVar).StringVar(&cf.Username)
+	// app.Flag("mem-profile", "Write memory profile to file").Hidden().StringVar(&memProfile)
+	// app.Flag("cpu-profile", "Write CPU profile to file").Hidden().StringVar(&cpuProfile)
 	app.Flag("option", "").Short('o').Hidden().AllowDuplicate().PreAction(func(ctx *kingpin.ParseContext) error {
 		return trace.BadParameter("invalid flag, perhaps you want to use this flag as tsh ssh -o?")
 	}).String()
@@ -469,7 +469,7 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	app.Flag("identity", "Identity file").Short('i').StringVar(&cf.IdentityFileIn)
 	app.Flag("compat", "OpenSSH compatibility flag").Hidden().StringVar(&cf.Compatibility)
 	app.Flag("cert-format", "SSH certificate format").StringVar(&cf.CertificateFormat)
-	app.Flag("trace", "Capture and export distributed traces").Hidden().BoolVar(&cf.SampleTraces)
+	// app.Flag("trace", "Capture and export distributed traces").Hidden().BoolVar(&cf.SampleTraces)
 
 	if !moduleCfg.IsBoringBinary() {
 		// The user is *never* allowed to do this in FIPS mode.
@@ -478,161 +478,162 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 			BoolVar(&cf.InsecureSkipVerify)
 	}
 
-	app.Flag("auth", "Specify the name of authentication connector to use.").Envar(authEnvVar).StringVar(&cf.AuthConnector)
-	app.Flag("namespace", "Namespace of the cluster").Default(apidefaults.Namespace).Hidden().StringVar(&cf.Namespace)
+	// app.Flag("auth", "Specify the name of authentication connector to use.").Envar(authEnvVar).StringVar(&cf.AuthConnector)
+	// app.Flag("namespace", "Namespace of the cluster").Default(apidefaults.Namespace).Hidden().StringVar(&cf.Namespace)
 	app.Flag("skip-version-check", "Skip version checking between server and client.").BoolVar(&cf.SkipVersionCheck)
 	app.Flag("debug", "Verbose logging to stdout").Short('d').BoolVar(&cf.Debug)
 	app.Flag("add-keys-to-agent", fmt.Sprintf("Controls how keys are handled. Valid values are %v.", client.AllAddKeysOptions)).Short('k').Envar(addKeysToAgentEnvVar).Default(client.AddKeysToAgentAuto).StringVar(&cf.AddKeysToAgent)
-	app.Flag("use-local-ssh-agent", "Deprecated in favor of the add-keys-to-agent flag.").
-		Hidden().
-		Envar(useLocalSSHAgentEnvVar).
-		Default("true").
-		BoolVar(&cf.UseLocalSSHAgent)
+	// app.Flag("use-local-ssh-agent", "Deprecated in favor of the add-keys-to-agent flag.").
+	// 	Hidden().
+	// 	Envar(useLocalSSHAgentEnvVar).
+	// 	Default("true").
+	// 	BoolVar(&cf.UseLocalSSHAgent)
 	app.Flag("enable-escape-sequences", "Enable support for SSH escape sequences. Type '~?' during an SSH session to list supported sequences. Default is enabled.").
 		Default("true").
 		BoolVar(&cf.EnableEscapeSequences)
-	app.Flag("bind-addr", "Override host:port used when opening a browser for cluster logins").Envar(bindAddrEnvVar).StringVar(&cf.BindAddr)
-	modes := []string{mfaModeAuto, mfaModeCrossPlatform, mfaModePlatform, mfaModeOTP}
-	app.Flag("mfa-mode", fmt.Sprintf("Preferred mode for MFA and Passwordless assertions (%v)", strings.Join(modes, ", "))).
-		Default(mfaModeAuto).
-		Envar(mfaModeEnvVar).
-		EnumVar(&cf.MFAMode, modes...)
+	app.Flag("bind-addr", "Override host:port used when opening a browser for Remote Access logins").Envar(bindAddrEnvVar).StringVar(&cf.BindAddr)
+	// modes := []string{mfaModeAuto, mfaModeCrossPlatform, mfaModePlatform, mfaModeOTP}
+	// app.Flag("mfa-mode", fmt.Sprintf("Preferred mode for MFA and Passwordless assertions (%v)", strings.Join(modes, ", "))).
+	// 	Default(mfaModeAuto).
+	// 	Envar(mfaModeEnvVar).
+	// 	EnumVar(&cf.MFAMode, modes...)
 	app.HelpFlag.Short('h')
 
-	ver := app.Command("version", "Print the version of your tsh binary")
-	ver.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// ver := app.Command("version", "Print the version of your ish binary")
+	// ver.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
 	// ssh
-	ssh := app.Command("ssh", "Run shell or execute a command on a remote SSH node")
+	ssh := app.Command("ssh", "Run shell on a remote SSH node")
 	ssh.Arg("[user@]host", "Remote hostname and the login to use").Required().StringVar(&cf.UserHost)
-	ssh.Arg("command", "Command to execute on a remote host").StringsVar(&cf.RemoteCommand)
-	app.Flag("jumphost", "SSH jumphost").Short('J').StringVar(&cf.ProxyJump)
+	// ssh.Arg("command", "Command to execute on a remote host").StringsVar(&cf.RemoteCommand)
+	// app.Flag("jumphost", "SSH jumphost").Short('J').StringVar(&cf.ProxyJump)
 	ssh.Flag("port", "SSH port on a remote host").Short('p').Int32Var(&cf.NodePort)
-	ssh.Flag("forward-agent", "Forward agent to target node").Short('A').BoolVar(&cf.ForwardAgent)
-	ssh.Flag("forward", "Forward localhost connections to remote server").Short('L').StringsVar(&cf.LocalForwardPorts)
-	ssh.Flag("dynamic-forward", "Forward localhost connections to remote server using SOCKS5").Short('D').StringsVar(&cf.DynamicForwardedPorts)
-	ssh.Flag("local", "Execute command on localhost after connecting to SSH node").Default("false").BoolVar(&cf.LocalExec)
-	ssh.Flag("tty", "Allocate TTY").Short('t').BoolVar(&cf.Interactive)
-	ssh.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// ssh.Flag("forward-agent", "Forward agent to target node").Short('A').BoolVar(&cf.ForwardAgent)
+	// ssh.Flag("forward", "Forward localhost connections to remote server").Short('L').StringsVar(&cf.LocalForwardPorts)
+	// ssh.Flag("dynamic-forward", "Forward localhost connections to remote server using SOCKS5").Short('D').StringsVar(&cf.DynamicForwardedPorts)
+	// ssh.Flag("local", "Execute command on localhost after connecting to SSH node").Default("false").BoolVar(&cf.LocalExec)
+	// ssh.Flag("tty", "Allocate TTY").Short('t').BoolVar(&cf.Interactive)
+	// ssh.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
 	ssh.Flag("option", "OpenSSH options in the format used in the configuration file").Short('o').AllowDuplicate().StringsVar(&cf.Options)
-	ssh.Flag("no-remote-exec", "Don't execute remote command, useful for port forwarding").Short('N').BoolVar(&cf.NoRemoteExec)
-	ssh.Flag("x11-untrusted", "Requests untrusted (secure) X11 forwarding for this session").Short('X').BoolVar(&cf.X11ForwardingUntrusted)
-	ssh.Flag("x11-trusted", "Requests trusted (insecure) X11 forwarding for this session. This can make your local displays vulnerable to attacks, use with caution").Short('Y').BoolVar(&cf.X11ForwardingTrusted)
-	ssh.Flag("x11-untrusted-timeout", "Sets a timeout for untrusted X11 forwarding, after which the client will reject any forwarding requests from the server").Default("10m").DurationVar((&cf.X11ForwardingTimeout))
-	ssh.Flag("participant-req", "Displays a verbose list of required participants in a moderated session.").BoolVar(&cf.displayParticipantRequirements)
-	ssh.Flag("request-reason", "Reason for requesting access").StringVar(&cf.RequestReason)
-	ssh.Flag("disable-access-request", "Disable automatic resource access requests").BoolVar(&cf.disableAccessRequest)
+	// ssh.Flag("no-remote-exec", "Don't execute remote command, useful for port forwarding").Short('N').BoolVar(&cf.NoRemoteExec)
+	// ssh.Flag("x11-untrusted", "Requests untrusted (secure) X11 forwarding for this session").Short('X').BoolVar(&cf.X11ForwardingUntrusted)
+	// ssh.Flag("x11-trusted", "Requests trusted (insecure) X11 forwarding for this session. This can make your local displays vulnerable to attacks, use with caution").Short('Y').BoolVar(&cf.X11ForwardingTrusted)
+	// ssh.Flag("x11-untrusted-timeout", "Sets a timeout for untrusted X11 forwarding, after which the client will reject any forwarding requests from the server").Default("10m").DurationVar((&cf.X11ForwardingTimeout))
+	// ssh.Flag("participant-req", "Displays a verbose list of required participants in a moderated session.").BoolVar(&cf.displayParticipantRequirements)
+	// ssh.Flag("request-reason", "Reason for requesting access").StringVar(&cf.RequestReason)
+	// ssh.Flag("disable-access-request", "Disable automatic resource access requests").BoolVar(&cf.disableAccessRequest)
 
 	// Daemon service for teleterm client
-	daemon := app.Command("daemon", "Daemon is the tsh daemon service").Hidden()
-	daemonStart := daemon.Command("start", "Starts tsh daemon service").Hidden()
-	daemonStart.Flag("addr", "Addr is the daemon listening address.").StringVar(&cf.DaemonAddr)
+	// daemon := app.Command("daemon", "Daemon is the tsh daemon service").Hidden()
+	// daemonStart := daemon.Command("start", "Starts tsh daemon service").Hidden()
+	// daemonStart.Flag("addr", "Addr is the daemon listening address.").StringVar(&cf.DaemonAddr)
 
 	// AWS.
-	aws := app.Command("aws", "Access AWS API.")
-	aws.Arg("command", "AWS command and subcommands arguments that are going to be forwarded to AWS CLI.").StringsVar(&cf.AWSCommandArgs)
-	aws.Flag("app", "Optional Name of the AWS application to use if logged into multiple.").StringVar(&cf.AppName)
-	aws.Flag("endpoint-url", "Run local proxy to serve as an AWS endpoint URL. If not specified, local proxy serves as an HTTPS proxy.").
-		Short('e').Hidden().BoolVar(&cf.AWSEndpointURLMode)
+	// aws := app.Command("aws", "Access AWS API.")
+	// aws.Arg("command", "AWS command and subcommands arguments that are going to be forwarded to AWS CLI.").StringsVar(&cf.AWSCommandArgs)
+	// aws.Flag("app", "Optional Name of the AWS application to use if logged into multiple.").StringVar(&cf.AppName)
+	// aws.Flag("endpoint-url", "Run local proxy to serve as an AWS endpoint URL. If not specified, local proxy serves as an HTTPS proxy.").
+	// 	Short('e').Hidden().BoolVar(&cf.AWSEndpointURLMode)
 
 	// Applications.
-	apps := app.Command("apps", "View and control proxied applications.").Alias("app")
-	lsApps := apps.Command("ls", "List available applications.")
-	lsApps.Flag("verbose", "Show extra application fields.").Short('v').BoolVar(&cf.Verbose)
-	lsApps.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	lsApps.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
-	lsApps.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
-	lsApps.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	lsApps.Arg("labels", labelHelp).StringVar(&cf.UserHost)
-	lsApps.Flag("all", "List apps from all clusters and proxies.").Short('R').BoolVar(&cf.ListAll)
-	appLogin := apps.Command("login", "Retrieve short-lived certificate for an app.")
-	appLogin.Arg("app", "App name to retrieve credentials for. Can be obtained from `tsh apps ls` output.").Required().StringVar(&cf.AppName)
-	appLogin.Flag("aws-role", "(For AWS CLI access only) Amazon IAM role ARN or role name.").StringVar(&cf.AWSRole)
-	appLogout := apps.Command("logout", "Remove app certificate.")
-	appLogout.Arg("app", "App to remove credentials for.").StringVar(&cf.AppName)
-	appConfig := apps.Command("config", "Print app connection information.")
-	appConfig.Arg("app", "App to print information for. Required when logged into multiple apps.").StringVar(&cf.AppName)
-	appConfig.Flag("format", fmt.Sprintf("Optional print format, one of: %q to print app address, %q to print CA cert path, %q to print cert path, %q print key path, %q to print example curl command, %q or %q to print everything as JSON or YAML.",
-		appFormatURI, appFormatCA, appFormatCert, appFormatKey, appFormatCURL, appFormatJSON, appFormatYAML),
-	).Short('f').StringVar(&cf.Format)
+	// apps := app.Command("apps", "View and control proxied applications.").Alias("app")
+	// lsApps := apps.Command("ls", "List available applications.")
+	// lsApps.Flag("verbose", "Show extra application fields.").Short('v').BoolVar(&cf.Verbose)
+	// lsApps.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// lsApps.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
+	// lsApps.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
+	// lsApps.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// lsApps.Arg("labels", labelHelp).StringVar(&cf.UserHost)
+	// lsApps.Flag("all", "List apps from all clusters and proxies.").Short('R').BoolVar(&cf.ListAll)
+	// appLogin := apps.Command("login", "Retrieve short-lived certificate for an app.")
+	// appLogin.Arg("app", "App name to retrieve credentials for. Can be obtained from `tsh apps ls` output.").Required().StringVar(&cf.AppName)
+	// appLogin.Flag("aws-role", "(For AWS CLI access only) Amazon IAM role ARN or role name.").StringVar(&cf.AWSRole)
+	// appLogout := apps.Command("logout", "Remove app certificate.")
+	// appLogout.Arg("app", "App to remove credentials for.").StringVar(&cf.AppName)
+	// appConfig := apps.Command("config", "Print app connection information.")
+	// appConfig.Arg("app", "App to print information for. Required when logged into multiple apps.").StringVar(&cf.AppName)
+	// appConfig.Flag("format", fmt.Sprintf("Optional print format, one of: %q to print app address, %q to print CA cert path, %q to print cert path, %q print key path, %q to print example curl command, %q or %q to print everything as JSON or YAML.",
+	// 	appFormatURI, appFormatCA, appFormatCert, appFormatKey, appFormatCURL, appFormatJSON, appFormatYAML),
+	// ).Short('f').StringVar(&cf.Format)
 
 	// Local TLS proxy.
-	proxy := app.Command("proxy", "Run local TLS proxy allowing connecting to Teleport in single-port mode")
-	proxySSH := proxy.Command("ssh", "Start local TLS proxy for ssh connections when using Teleport in single-port mode")
-	proxySSH.Arg("[user@]host", "Remote hostname and the login to use").Required().StringVar(&cf.UserHost)
-	proxySSH.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	proxyDB := proxy.Command("db", "Start local TLS proxy for database connections when using Teleport in single-port mode")
-	proxyDB.Arg("db", "The name of the database to start local proxy for").Required().StringVar(&cf.DatabaseService)
-	proxyDB.Flag("port", "Specifies the source port used by proxy db listener").Short('p').StringVar(&cf.LocalProxyPort)
-	proxyDB.Flag("cert-file", "Certificate file for proxy client TLS configuration").StringVar(&cf.LocalProxyCertFile)
-	proxyDB.Flag("key-file", "Key file for proxy client TLS configuration").StringVar(&cf.LocalProxyKeyFile)
-	proxyDB.Flag("tunnel", "Open authenticated tunnel using database's client certificate so clients don't need to authenticate").BoolVar(&cf.LocalProxyTunnel)
-	proxyApp := proxy.Command("app", "Start local TLS proxy for app connection when using Teleport in single-port mode")
-	proxyApp.Arg("app", "The name of the application to start local proxy for").Required().StringVar(&cf.AppName)
-	proxyApp.Flag("port", "Specifies the source port used by by the proxy app listener").Short('p').StringVar(&cf.LocalProxyPort)
-	proxyAWS := proxy.Command("aws", "Start local proxy for AWS access.")
-	proxyAWS.Flag("app", "Optional Name of the AWS application to use if logged into multiple.").StringVar(&cf.AppName)
-	proxyAWS.Flag("port", "Specifies the source port used by the proxy listener.").Short('p').StringVar(&cf.LocalProxyPort)
-	proxyAWS.Flag("endpoint-url", "Run local proxy to serve as an AWS endpoint URL. If not specified, local proxy serves as an HTTPS proxy.").Short('e').BoolVar(&cf.AWSEndpointURLMode)
-	proxyAWS.Flag("format", envVarFormatFlagDescription()).Short('f').Default(envVarDefaultFormat()).EnumVar(&cf.Format, envVarFormats...)
+	// proxy := app.Command("proxy", "Run local TLS proxy allowing connecting to Teleport in single-port mode")
+	// proxySSH := proxy.Command("ssh", "Start local TLS proxy for ssh connections when using Teleport in single-port mode")
+	// proxySSH.Arg("[user@]host", "Remote hostname and the login to use").Required().StringVar(&cf.UserHost)
+	// proxySSH.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// proxyDB := proxy.Command("db", "Start local TLS proxy for database connections when using Teleport in single-port mode")
+	// proxyDB.Arg("db", "The name of the database to start local proxy for").Required().StringVar(&cf.DatabaseService)
+	// proxyDB.Flag("port", "Specifies the source port used by proxy db listener").Short('p').StringVar(&cf.LocalProxyPort)
+	// proxyDB.Flag("cert-file", "Certificate file for proxy client TLS configuration").StringVar(&cf.LocalProxyCertFile)
+	// proxyDB.Flag("key-file", "Key file for proxy client TLS configuration").StringVar(&cf.LocalProxyKeyFile)
+	// proxyDB.Flag("tunnel", "Open authenticated tunnel using database's client certificate so clients don't need to authenticate").BoolVar(&cf.LocalProxyTunnel)
+	// proxyApp := proxy.Command("app", "Start local TLS proxy for app connection when using Teleport in single-port mode")
+	// proxyApp.Arg("app", "The name of the application to start local proxy for").Required().StringVar(&cf.AppName)
+	// proxyApp.Flag("port", "Specifies the source port used by by the proxy app listener").Short('p').StringVar(&cf.LocalProxyPort)
+	// proxyAWS := proxy.Command("aws", "Start local proxy for AWS access.")
+	// proxyAWS.Flag("app", "Optional Name of the AWS application to use if logged into multiple.").StringVar(&cf.AppName)
+	// proxyAWS.Flag("port", "Specifies the source port used by the proxy listener.").Short('p').StringVar(&cf.LocalProxyPort)
+	// proxyAWS.Flag("endpoint-url", "Run local proxy to serve as an AWS endpoint URL. If not specified, local proxy serves as an HTTPS proxy.").Short('e').BoolVar(&cf.AWSEndpointURLMode)
+	// proxyAWS.Flag("format", envVarFormatFlagDescription()).Short('f').Default(envVarDefaultFormat()).EnumVar(&cf.Format, envVarFormats...)
 
 	// Databases.
-	db := app.Command("db", "View and control proxied databases.")
-	db.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	dbList := db.Command("ls", "List all available databases.")
-	dbList.Flag("verbose", "Show extra database fields.").Short('v').BoolVar(&cf.Verbose)
-	dbList.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
-	dbList.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
-	dbList.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	dbList.Flag("all", "List databases from all clusters and proxies.").Short('R').BoolVar(&cf.ListAll)
-	dbList.Arg("labels", labelHelp).StringVar(&cf.UserHost)
-	dbLogin := db.Command("login", "Retrieve credentials for a database.")
-	dbLogin.Arg("db", "Database to retrieve credentials for. Can be obtained from 'tsh db ls' output.").Required().StringVar(&cf.DatabaseService)
-	dbLogin.Flag("db-user", "Optional database user to configure as default.").StringVar(&cf.DatabaseUser)
-	dbLogin.Flag("db-name", "Optional database name to configure as default.").StringVar(&cf.DatabaseName)
-	dbLogout := db.Command("logout", "Remove database credentials.")
-	dbLogout.Arg("db", "Database to remove credentials for.").StringVar(&cf.DatabaseService)
-	dbEnv := db.Command("env", "Print environment variables for the configured database.")
-	dbEnv.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	dbEnv.Arg("db", "Print environment for the specified database").StringVar(&cf.DatabaseService)
-	// --db flag is deprecated in favor of positional argument for consistency with other commands.
-	dbEnv.Flag("db", "Print environment for the specified database.").Hidden().StringVar(&cf.DatabaseService)
-	dbConfig := db.Command("config", "Print database connection information. Useful when configuring GUI clients.")
-	dbConfig.Arg("db", "Print information for the specified database.").StringVar(&cf.DatabaseService)
-	// --db flag is deprecated in favor of positional argument for consistency with other commands.
-	dbConfig.Flag("db", "Print information for the specified database.").Hidden().StringVar(&cf.DatabaseService)
-	dbConfig.Flag("format", fmt.Sprintf("Print format: %q to print in table format (default), %q to print connect command, %q or %q to print in JSON or YAML.",
-		dbFormatText, dbFormatCommand, dbFormatJSON, dbFormatYAML)).Short('f').EnumVar(&cf.Format, dbFormatText, dbFormatCommand, dbFormatJSON, dbFormatYAML)
-	dbConnect := db.Command("connect", "Connect to a database.")
-	dbConnect.Arg("db", "Database service name to connect to.").StringVar(&cf.DatabaseService)
-	dbConnect.Flag("db-user", "Optional database user to log in as.").StringVar(&cf.DatabaseUser)
-	dbConnect.Flag("db-name", "Optional database name to log in to.").StringVar(&cf.DatabaseName)
+	// db := app.Command("db", "View and control proxied databases.")
+	// db.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// dbList := db.Command("ls", "List all available databases.")
+	// dbList.Flag("verbose", "Show extra database fields.").Short('v').BoolVar(&cf.Verbose)
+	// dbList.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
+	// dbList.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
+	// dbList.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// dbList.Flag("all", "List databases from all clusters and proxies.").Short('R').BoolVar(&cf.ListAll)
+	// dbList.Arg("labels", labelHelp).StringVar(&cf.UserHost)
+	// dbLogin := db.Command("login", "Retrieve credentials for a database.")
+	// dbLogin.Arg("db", "Database to retrieve credentials for. Can be obtained from 'tsh db ls' output.").Required().StringVar(&cf.DatabaseService)
+	// dbLogin.Flag("db-user", "Optional database user to configure as default.").StringVar(&cf.DatabaseUser)
+	// dbLogin.Flag("db-name", "Optional database name to configure as default.").StringVar(&cf.DatabaseName)
+	// dbLogout := db.Command("logout", "Remove database credentials.")
+	// dbLogout.Arg("db", "Database to remove credentials for.").StringVar(&cf.DatabaseService)
+	// dbEnv := db.Command("env", "Print environment variables for the configured database.")
+	// dbEnv.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// dbEnv.Arg("db", "Print environment for the specified database").StringVar(&cf.DatabaseService)
+	// // --db flag is deprecated in favor of positional argument for consistency with other commands.
+	// dbEnv.Flag("db", "Print environment for the specified database.").Hidden().StringVar(&cf.DatabaseService)
+	// dbConfig := db.Command("config", "Print database connection information. Useful when configuring GUI clients.")
+	// dbConfig.Arg("db", "Print information for the specified database.").StringVar(&cf.DatabaseService)
+	// // --db flag is deprecated in favor of positional argument for consistency with other commands.
+	// dbConfig.Flag("db", "Print information for the specified database.").Hidden().StringVar(&cf.DatabaseService)
+	// dbConfig.Flag("format", fmt.Sprintf("Print format: %q to print in table format (default), %q to print connect command, %q or %q to print in JSON or YAML.",
+	// 	dbFormatText, dbFormatCommand, dbFormatJSON, dbFormatYAML)).Short('f').EnumVar(&cf.Format, dbFormatText, dbFormatCommand, dbFormatJSON, dbFormatYAML)
+	// dbConnect := db.Command("connect", "Connect to a database.")
+	// dbConnect.Arg("db", "Database service name to connect to.").StringVar(&cf.DatabaseService)
+	// dbConnect.Flag("db-user", "Optional database user to log in as.").StringVar(&cf.DatabaseUser)
+	// dbConnect.Flag("db-name", "Optional database name to log in to.").StringVar(&cf.DatabaseName)
 
 	// join
-	join := app.Command("join", "Join the active SSH session")
-	join.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	join.Flag("mode", "Mode of joining the session, valid modes are observer and moderator").Short('m').Default("peer").StringVar(&cf.JoinMode)
-	join.Flag("reason", "The purpose of the session.").StringVar(&cf.Reason)
-	join.Flag("invite", "A comma separated list of people to mark as invited for the session.").StringsVar(&cf.Invited)
-	join.Arg("session-id", "ID of the session to join").Required().StringVar(&cf.SessionID)
-	// play
-	play := app.Command("play", "Replay the recorded SSH session")
-	play.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	play.Flag("format", formatFlagDescription(
-		teleport.PTY, teleport.JSON, teleport.YAML,
-	)).Short('f').Default(teleport.PTY).EnumVar(&cf.Format, teleport.PTY, teleport.JSON, teleport.YAML)
-	play.Arg("session-id", "ID of the session to play").Required().StringVar(&cf.SessionID)
+	// join := app.Command("join", "Join the active SSH session")
+	// join.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// join.Flag("mode", "Mode of joining the session, valid modes are observer and moderator").Short('m').Default("peer").StringVar(&cf.JoinMode)
+	// join.Flag("reason", "The purpose of the session.").StringVar(&cf.Reason)
+	// join.Flag("invite", "A comma separated list of people to mark as invited for the session.").StringsVar(&cf.Invited)
+	// join.Arg("session-id", "ID of the session to join").Required().StringVar(&cf.SessionID)
+	// // play
+	// play := app.Command("play", "Replay the recorded SSH session")
+	// play.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// play.Flag("format", formatFlagDescription(
+	// 	teleport.PTY, teleport.JSON, teleport.YAML,
+	// )).Short('f').Default(teleport.PTY).EnumVar(&cf.Format, teleport.PTY, teleport.JSON, teleport.YAML)
+	// play.Arg("session-id", "ID of the session to play").Required().StringVar(&cf.SessionID)
 
 	// scp
 	scp := app.Command("scp", "Secure file copy")
-	scp.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// scp.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
 	scp.Arg("from, to", "Source and destination to copy").Required().StringsVar(&cf.CopySpec)
 	scp.Flag("recursive", "Recursive copy of subdirectories").Short('r').BoolVar(&cf.RecursiveCopy)
 	scp.Flag("port", "Port to connect to on the remote host").Short('P').Int32Var(&cf.NodePort)
 	scp.Flag("preserve", "Preserves access and modification times from the original file").Short('p').BoolVar(&cf.PreserveAttrs)
 	scp.Flag("quiet", "Quiet mode").Short('q').BoolVar(&cf.Quiet)
+	
 	// ls
 	ls := app.Command("ls", "List remote SSH nodes")
-	ls.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// ls.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
 	ls.Flag("verbose", "One-line output (for text format), including node UUIDs").Short('v').BoolVar(&cf.Verbose)
 	ls.Flag("format", formatFlagDescription(
 		teleport.Text, teleport.JSON, teleport.YAML, teleport.Names,
@@ -640,115 +641,115 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	ls.Arg("labels", labelHelp).StringVar(&cf.UserHost)
 	ls.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
 	ls.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
-	ls.Flag("all", "List nodes from all clusters and proxies.").Short('R').BoolVar(&cf.ListAll)
-	// clusters
-	clusters := app.Command("clusters", "List available Teleport clusters")
-	clusters.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	clusters.Flag("quiet", "Quiet mode").Short('q').BoolVar(&cf.Quiet)
+	ls.Flag("all", "List nodes from all Remote Access servers.").Short('R').BoolVar(&cf.ListAll)
+	// // clusters
+	// clusters := app.Command("clusters", "List available Teleport clusters")
+	// clusters.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// clusters.Flag("quiet", "Quiet mode").Short('q').BoolVar(&cf.Quiet)
 
 	// login logs in with remote proxy and obtains a "session certificate" which gets
 	// stored in ~/.tsh directory
-	login := app.Command("login", "Log in to a cluster and retrieve the session certificate")
+	login := app.Command("login", "Log in to a Remote Access server and retrieve the session certificate")
 	login.Flag("out", "Identity output").Short('o').AllowDuplicate().StringVar(&cf.IdentityFileOut)
-	login.Flag("format", fmt.Sprintf("Identity format: %s, %s (for OpenSSH compatibility) or %s (for kubeconfig)",
+	login.Flag("format", fmt.Sprintf("Identity format: %s, %s (for OpenSSH compatibility) ",
 		identityfile.DefaultFormat,
 		identityfile.FormatOpenSSH,
-		identityfile.FormatKubernetes,
+		// identityfile.FormatKubernetes,
 	)).Default(string(identityfile.DefaultFormat)).Short('f').StringVar((*string)(&cf.IdentityFormat))
 	login.Flag("overwrite", "Whether to overwrite the existing identity file.").BoolVar(&cf.IdentityOverwrite)
-	login.Flag("request-roles", "Request one or more extra roles").StringVar(&cf.DesiredRoles)
-	login.Flag("request-reason", "Reason for requesting additional roles").StringVar(&cf.RequestReason)
-	login.Flag("request-reviewers", "Suggested reviewers for role request").StringVar(&cf.SuggestedReviewers)
-	login.Flag("request-nowait", "Finish without waiting for request resolution").BoolVar(&cf.NoWait)
-	login.Flag("request-id", "Login with the roles requested in the given request").StringVar(&cf.RequestID)
-	login.Arg("cluster", clusterHelp).StringVar(&cf.SiteName)
+	// login.Flag("request-roles", "Request one or more extra roles").StringVar(&cf.DesiredRoles)
+	// login.Flag("request-reason", "Reason for requesting additional roles").StringVar(&cf.RequestReason)
+	// login.Flag("request-reviewers", "Suggested reviewers for role request").StringVar(&cf.SuggestedReviewers)
+	// login.Flag("request-nowait", "Finish without waiting for request resolution").BoolVar(&cf.NoWait)
+	// login.Flag("request-id", "Login with the roles requested in the given request").StringVar(&cf.RequestID)
+	// login.Arg("cluster", clusterHelp).StringVar(&cf.SiteName)
 	login.Flag("browser", browserHelp).StringVar(&cf.Browser)
-	login.Flag("kube-cluster", "Name of the Kubernetes cluster to login to").StringVar(&cf.KubernetesCluster)
+	// login.Flag("kube-cluster", "Name of the Kubernetes cluster to login to").StringVar(&cf.KubernetesCluster)
 	login.Alias(loginUsageFooter)
 
 	// logout deletes obtained session certificates in ~/.tsh
-	logout := app.Command("logout", "Delete a cluster certificate")
+	logout := app.Command("logout", "Delete a Remote Access server certificate")
 
 	// bench
-	bench := app.Command("bench", "Run shell or execute a command on a remote SSH node").Hidden()
-	bench.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
-	bench.Arg("[user@]host", "Remote hostname and the login to use").Required().StringVar(&cf.UserHost)
-	bench.Arg("command", "Command to execute on a remote host").Required().StringsVar(&cf.RemoteCommand)
-	bench.Flag("port", "SSH port on a remote host").Short('p').Int32Var(&cf.NodePort)
-	bench.Flag("duration", "Test duration").Default("1s").DurationVar(&cf.BenchDuration)
-	bench.Flag("rate", "Requests per second rate").Default("10").IntVar(&cf.BenchRate)
-	bench.Flag("interactive", "Create interactive SSH session").BoolVar(&cf.BenchInteractive)
-	bench.Flag("export", "Export the latency profile").BoolVar(&cf.BenchExport)
-	bench.Flag("path", "Directory to save the latency profile to, default path is the current directory").Default(".").StringVar(&cf.BenchExportPath)
-	bench.Flag("ticks", "Ticks per half distance").Default("100").Int32Var(&cf.BenchTicks)
-	bench.Flag("scale", "Value scale in which to scale the recorded values").Default("1.0").Float64Var(&cf.BenchValueScale)
+	// bench := app.Command("bench", "Run shell or execute a command on a remote SSH node").Hidden()
+	// bench.Flag("cluster", clusterHelp).Short('c').StringVar(&cf.SiteName)
+	// bench.Arg("[user@]host", "Remote hostname and the login to use").Required().StringVar(&cf.UserHost)
+	// bench.Arg("command", "Command to execute on a remote host").Required().StringsVar(&cf.RemoteCommand)
+	// bench.Flag("port", "SSH port on a remote host").Short('p').Int32Var(&cf.NodePort)
+	// bench.Flag("duration", "Test duration").Default("1s").DurationVar(&cf.BenchDuration)
+	// bench.Flag("rate", "Requests per second rate").Default("10").IntVar(&cf.BenchRate)
+	// bench.Flag("interactive", "Create interactive SSH session").BoolVar(&cf.BenchInteractive)
+	// bench.Flag("export", "Export the latency profile").BoolVar(&cf.BenchExport)
+	// bench.Flag("path", "Directory to save the latency profile to, default path is the current directory").Default(".").StringVar(&cf.BenchExportPath)
+	// bench.Flag("ticks", "Ticks per half distance").Default("100").Int32Var(&cf.BenchTicks)
+	// bench.Flag("scale", "Value scale in which to scale the recorded values").Default("1.0").Float64Var(&cf.BenchValueScale)
 
 	// show key
-	show := app.Command("show", "Read an identity from file and print to stdout").Hidden()
-	show.Arg("identity_file", "The file containing a public key or a certificate").Required().StringVar(&cf.IdentityFileIn)
+	// show := app.Command("show", "Read an identity from file and print to stdout").Hidden()
+	// show.Arg("identity_file", "The file containing a public key or a certificate").Required().StringVar(&cf.IdentityFileIn)
 
 	// The status command shows which proxy the user is logged into and metadata
 	// about the certificate.
-	status := app.Command("status", "Display the list of proxy servers and retrieved certificates")
+	status := app.Command("status", "Display the list of Remote Access servers and retrieved certificates")
 	status.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
 
 	// The environment command prints out environment variables for the configured
 	// proxy and cluster. Can be used to create sessions "sticky" to a terminal
 	// even if the user runs "tsh login" again in another window.
-	environment := app.Command("env", "Print commands to set Teleport session environment variables")
-	environment.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	environment.Flag("unset", "Print commands to clear Teleport session environment variables").BoolVar(&cf.unsetEnvironment)
+	// environment := app.Command("env", "Print commands to set Remote Access session environment variables")
+	// environment.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// environment.Flag("unset", "Print commands to clear Remote Access session environment variables").BoolVar(&cf.unsetEnvironment)
 
-	req := app.Command("request", "Manage access requests").Alias("requests")
+	// req := app.Command("request", "Manage access requests").Alias("requests")
 
-	reqList := req.Command("ls", "List access requests").Alias("list")
-	reqList.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	reqList.Flag("reviewable", "Only show requests reviewable by current user").BoolVar(&cf.ReviewableRequests)
-	reqList.Flag("suggested", "Only show requests that suggest current user as reviewer").BoolVar(&cf.SuggestedRequests)
-	reqList.Flag("my-requests", "Only show requests created by current user").BoolVar(&cf.MyRequests)
+	// reqList := req.Command("ls", "List access requests").Alias("list")
+	// reqList.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// reqList.Flag("reviewable", "Only show requests reviewable by current user").BoolVar(&cf.ReviewableRequests)
+	// reqList.Flag("suggested", "Only show requests that suggest current user as reviewer").BoolVar(&cf.SuggestedRequests)
+	// reqList.Flag("my-requests", "Only show requests created by current user").BoolVar(&cf.MyRequests)
 
-	reqShow := req.Command("show", "Show request details").Alias("details")
-	reqShow.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
-	reqShow.Arg("request-id", "ID of the target request").Required().StringVar(&cf.RequestID)
+	// reqShow := req.Command("show", "Show request details").Alias("details")
+	// reqShow.Flag("format", formatFlagDescription(defaultFormats...)).Short('f').Default(teleport.Text).EnumVar(&cf.Format, defaultFormats...)
+	// reqShow.Arg("request-id", "ID of the target request").Required().StringVar(&cf.RequestID)
 
-	reqCreate := req.Command("new", "Create a new access request").Alias("create")
-	reqCreate.Flag("roles", "Roles to be requested").StringVar(&cf.DesiredRoles)
-	reqCreate.Flag("reason", "Reason for requesting").StringVar(&cf.RequestReason)
-	reqCreate.Flag("reviewers", "Suggested reviewers").StringVar(&cf.SuggestedReviewers)
-	reqCreate.Flag("nowait", "Finish without waiting for request resolution").BoolVar(&cf.NoWait)
-	reqCreate.Flag("resource", "Resource ID to be requested").StringsVar(&cf.RequestedResourceIDs)
+	// reqCreate := req.Command("new", "Create a new access request").Alias("create")
+	// reqCreate.Flag("roles", "Roles to be requested").StringVar(&cf.DesiredRoles)
+	// reqCreate.Flag("reason", "Reason for requesting").StringVar(&cf.RequestReason)
+	// reqCreate.Flag("reviewers", "Suggested reviewers").StringVar(&cf.SuggestedReviewers)
+	// reqCreate.Flag("nowait", "Finish without waiting for request resolution").BoolVar(&cf.NoWait)
+	// reqCreate.Flag("resource", "Resource ID to be requested").StringsVar(&cf.RequestedResourceIDs)
 
-	reqReview := req.Command("review", "Review an access request")
-	reqReview.Arg("request-id", "ID of target request").Required().StringVar(&cf.RequestID)
-	reqReview.Flag("approve", "Review proposes approval").BoolVar(&cf.Approve)
-	reqReview.Flag("deny", "Review proposes denial").BoolVar(&cf.Deny)
-	reqReview.Flag("reason", "Review reason message").StringVar(&cf.ReviewReason)
+	// reqReview := req.Command("review", "Review an access request")
+	// reqReview.Arg("request-id", "ID of target request").Required().StringVar(&cf.RequestID)
+	// reqReview.Flag("approve", "Review proposes approval").BoolVar(&cf.Approve)
+	// reqReview.Flag("deny", "Review proposes denial").BoolVar(&cf.Deny)
+	// reqReview.Flag("reason", "Review reason message").StringVar(&cf.ReviewReason)
 
-	reqSearch := req.Command("search", "Search for resources to request access to")
-	reqSearch.Flag("kind",
-		fmt.Sprintf("Resource kind to search for (%s)",
-			strings.Join(types.RequestableResourceKinds, ", ")),
-	).Required().EnumVar(&cf.ResourceKind, types.RequestableResourceKinds...)
-	reqSearch.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
-	reqSearch.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
-	reqSearch.Flag("labels", labelHelp).StringVar(&cf.UserHost)
+	// reqSearch := req.Command("search", "Search for resources to request access to")
+	// reqSearch.Flag("kind",
+	// 	fmt.Sprintf("Resource kind to search for (%s)",
+	// 		strings.Join(types.RequestableResourceKinds, ", ")),
+	// ).Required().EnumVar(&cf.ResourceKind, types.RequestableResourceKinds...)
+	// reqSearch.Flag("search", searchHelp).StringVar(&cf.SearchKeywords)
+	// reqSearch.Flag("query", queryHelp).StringVar(&cf.PredicateExpression)
+	// reqSearch.Flag("labels", labelHelp).StringVar(&cf.UserHost)
 
 	// Kubernetes subcommands.
-	kube := newKubeCommand(app)
+	// kube := newKubeCommand(app)
 	// MFA subcommands.
-	mfa := newMFACommand(app)
+	// mfa := newMFACommand(app)
 
-	config := app.Command("config", "Print OpenSSH configuration details")
+	// config := app.Command("config", "Print OpenSSH configuration details")
 
-	f2 := app.Command("fido2", "FIDO2 commands").Hidden()
-	f2Diag := f2.Command("diag", "Run FIDO2 diagnostics").Hidden()
+	// f2 := app.Command("fido2", "FIDO2 commands").Hidden()
+	// f2Diag := f2.Command("diag", "Run FIDO2 diagnostics").Hidden()
 
 	// touchid subcommands.
-	tid := newTouchIDCommand(app)
+	// tid := newTouchIDCommand(app)
 
-	if runtime.GOOS == constants.WindowsOS {
-		bench.Hidden()
-	}
+	// if runtime.GOOS == constants.WindowsOS {
+	// 	bench.Hidden()
+	// }
 
 	// parse CLI commands+flags:
 	utils.UpdateAppUsageTemplate(app, args)
@@ -850,22 +851,22 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	}
 
 	switch command {
-	case ver.FullCommand():
-		err = onVersion(&cf)
+	// case ver.FullCommand():
+	// 	err = onVersion(&cf)
 	case ssh.FullCommand():
 		err = onSSH(&cf)
-	case bench.FullCommand():
-		err = onBenchmark(&cf)
-	case join.FullCommand():
-		err = onJoin(&cf)
+	// case bench.FullCommand():
+	// 	err = onBenchmark(&cf)
+	// case join.FullCommand():
+	// 	err = onJoin(&cf)
 	case scp.FullCommand():
 		err = onSCP(&cf)
-	case play.FullCommand():
-		err = onPlay(&cf)
+	// case play.FullCommand():
+	// 	err = onPlay(&cf)
 	case ls.FullCommand():
 		err = onListNodes(&cf)
-	case clusters.FullCommand():
-		err = onListClusters(&cf)
+	// case clusters.FullCommand():
+	// 	err = onListClusters(&cf)
 	case login.FullCommand():
 		err = onLogin(&cf)
 	case logout.FullCommand():
@@ -873,87 +874,87 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 			return trace.Wrap(err)
 		}
 		err = onLogout(&cf)
-	case show.FullCommand():
-		err = onShow(&cf)
+	// case show.FullCommand():
+	// 	err = onShow(&cf)
 	case status.FullCommand():
 		err = onStatus(&cf)
-	case lsApps.FullCommand():
-		err = onApps(&cf)
-	case appLogin.FullCommand():
-		err = onAppLogin(&cf)
-	case appLogout.FullCommand():
-		err = onAppLogout(&cf)
-	case appConfig.FullCommand():
-		err = onAppConfig(&cf)
-	case kube.credentials.FullCommand():
-		err = kube.credentials.run(&cf)
-	case kube.ls.FullCommand():
-		err = kube.ls.run(&cf)
-	case kube.login.FullCommand():
-		err = kube.login.run(&cf)
-	case kube.sessions.FullCommand():
-		err = kube.sessions.run(&cf)
-	case kube.exec.FullCommand():
-		err = kube.exec.run(&cf)
-	case kube.join.FullCommand():
-		err = kube.join.run(&cf)
+	// case lsApps.FullCommand():
+	// 	err = onApps(&cf)
+	// case appLogin.FullCommand():
+	// 	err = onAppLogin(&cf)
+	// case appLogout.FullCommand():
+	// 	err = onAppLogout(&cf)
+	// case appConfig.FullCommand():
+	// 	err = onAppConfig(&cf)
+	// case kube.credentials.FullCommand():
+	// 	err = kube.credentials.run(&cf)
+	// case kube.ls.FullCommand():
+	// 	err = kube.ls.run(&cf)
+	// case kube.login.FullCommand():
+	// 	err = kube.login.run(&cf)
+	// case kube.sessions.FullCommand():
+	// 	err = kube.sessions.run(&cf)
+	// case kube.exec.FullCommand():
+	// 	err = kube.exec.run(&cf)
+	// case kube.join.FullCommand():
+	// 	err = kube.join.run(&cf)
 
-	case proxySSH.FullCommand():
-		err = onProxyCommandSSH(&cf)
-	case proxyDB.FullCommand():
-		err = onProxyCommandDB(&cf)
-	case proxyApp.FullCommand():
-		err = onProxyCommandApp(&cf)
-	case proxyAWS.FullCommand():
-		err = onProxyCommandAWS(&cf)
+	// case proxySSH.FullCommand():
+	// 	err = onProxyCommandSSH(&cf)
+	// case proxyDB.FullCommand():
+	// 	err = onProxyCommandDB(&cf)
+	// case proxyApp.FullCommand():
+	// 	err = onProxyCommandApp(&cf)
+	// case proxyAWS.FullCommand():
+	// 	err = onProxyCommandAWS(&cf)
 
-	case dbList.FullCommand():
-		err = onListDatabases(&cf)
-	case dbLogin.FullCommand():
-		err = onDatabaseLogin(&cf)
-	case dbLogout.FullCommand():
-		err = onDatabaseLogout(&cf)
-	case dbEnv.FullCommand():
-		err = onDatabaseEnv(&cf)
-	case dbConfig.FullCommand():
-		err = onDatabaseConfig(&cf)
-	case dbConnect.FullCommand():
-		err = onDatabaseConnect(&cf)
-	case environment.FullCommand():
-		err = onEnvironment(&cf)
-	case mfa.ls.FullCommand():
-		err = mfa.ls.run(&cf)
-	case mfa.add.FullCommand():
-		err = mfa.add.run(&cf)
-	case mfa.rm.FullCommand():
-		err = mfa.rm.run(&cf)
-	case reqList.FullCommand():
-		err = onRequestList(&cf)
-	case reqShow.FullCommand():
-		err = onRequestShow(&cf)
-	case reqCreate.FullCommand():
-		err = onRequestCreate(&cf)
-	case reqReview.FullCommand():
-		err = onRequestReview(&cf)
-	case reqSearch.FullCommand():
-		err = onRequestSearch(&cf)
-	case config.FullCommand():
-		err = onConfig(&cf)
-	case aws.FullCommand():
-		err = onAWS(&cf)
-	case daemonStart.FullCommand():
-		err = onDaemonStart(&cf)
-	case f2Diag.FullCommand():
-		err = onFIDO2Diag(&cf)
-	case tid.diag.FullCommand():
-		err = tid.diag.run(&cf)
+	// case dbList.FullCommand():
+	// 	err = onListDatabases(&cf)
+	// case dbLogin.FullCommand():
+	// 	err = onDatabaseLogin(&cf)
+	// case dbLogout.FullCommand():
+	// 	err = onDatabaseLogout(&cf)
+	// case dbEnv.FullCommand():
+	// 	err = onDatabaseEnv(&cf)
+	// case dbConfig.FullCommand():
+	// 	err = onDatabaseConfig(&cf)
+	// case dbConnect.FullCommand():
+	// 	err = onDatabaseConnect(&cf)
+	// case environment.FullCommand():
+	// 	err = onEnvironment(&cf)
+	// case mfa.ls.FullCommand():
+	// 	err = mfa.ls.run(&cf)
+	// case mfa.add.FullCommand():
+	// 	err = mfa.add.run(&cf)
+	// case mfa.rm.FullCommand():
+	// 	err = mfa.rm.run(&cf)
+	// case reqList.FullCommand():
+	// 	err = onRequestList(&cf)
+	// case reqShow.FullCommand():
+	// 	err = onRequestShow(&cf)
+	// case reqCreate.FullCommand():
+	// 	err = onRequestCreate(&cf)
+	// case reqReview.FullCommand():
+	// 	err = onRequestReview(&cf)
+	// case reqSearch.FullCommand():
+	// 	err = onRequestSearch(&cf)
+	// case config.FullCommand():
+	// 	err = onConfig(&cf)
+	// case aws.FullCommand():
+	// 	err = onAWS(&cf)
+	// case daemonStart.FullCommand():
+	// 	err = onDaemonStart(&cf)
+	// case f2Diag.FullCommand():
+	// 	err = onFIDO2Diag(&cf)
+	// case tid.diag.FullCommand():
+	// 	err = tid.diag.run(&cf)
 	default:
 		// Handle commands that might not be available.
 		switch {
-		case tid.ls != nil && command == tid.ls.FullCommand():
-			err = tid.ls.run(&cf)
-		case tid.rm != nil && command == tid.rm.FullCommand():
-			err = tid.rm.run(&cf)
+		// case tid.ls != nil && command == tid.ls.FullCommand():
+		// 	err = tid.ls.run(&cf)
+		// case tid.rm != nil && command == tid.rm.FullCommand():
+		// 	err = tid.rm.run(&cf)
 		default:
 			// This should only happen when there's a missing switch case above.
 			err = trace.BadParameter("command %q not configured", command)
