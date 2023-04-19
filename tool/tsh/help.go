@@ -24,20 +24,11 @@ import (
 const (
 	// loginUsageFooter is printed at the bottom of `tsh help login` output
 	loginUsageFooter = `NOTES:
-  The proxy address format is host:https_port,ssh_proxy_port
+  The --proxy is the url of your Remote Access server. E.g (acme.remote.idemeum.com)
 
 EXAMPLES:
-  Use ports 8080 and 8023 for https and SSH proxy:
-  $ tsh --proxy=host.example.com:8080,8023 login
-
-  Use port 8080 and 3023 (default) for SSH proxy:
-  $ tsh --proxy=host.example.com:8080 login
-
-  Login and select cluster "two":
-  $ tsh --proxy=host.example.com login two
-
-  Select cluster "two" using existing credentials and proxy:
-  $ tsh login two`
+  Will get an authentication token for your user to be able to login to your company's remote servers. 
+  $ tsh --proxy=acme.remote.idemeum.com login`
 
 	// missingPrincipalsFooter is printed at the bottom of `tsh ls` when no results are returned.
 	missingPrincipalsFooter = `
