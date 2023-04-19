@@ -24,17 +24,15 @@ import (
 const (
 	// loginUsageFooter is printed at the bottom of `tsh help login` output
 	loginUsageFooter = `NOTES:
-  The --proxy is the url of your Remote Access server. E.g (acme.remote.idemeum.com)
+  The tenant-url is the url of your Idemeum tenant. E.g (acme.idemeum.com)
 
 EXAMPLES:
   Will get an authentication token for your user to be able to login to your company's remote servers. 
-  $ tsh --proxy=acme.remote.idemeum.com login`
+  $ tsh login --tenant-url=acme.idemeum.com`
 
 	// missingPrincipalsFooter is printed at the bottom of `tsh ls` when no results are returned.
 	missingPrincipalsFooter = `
-  Not seeing nodes? Your user may be missing Linux principals. If trying teleport for the first time, follow this guide:
-
-https://goteleport.com/docs/getting-started/linux-server/#step-46-create-a-teleport-user-and-set-up-two-factor-authentication
+  Not seeing nodes? Your user may be missing Linux principals. Make sure you do have remote servers accessible to you in your Idemeum portal.
   `
 )
 

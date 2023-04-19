@@ -137,6 +137,8 @@ type CLIConf struct {
 	ExplicitUsername bool
 	// Proxy keeps the hostname:port of the SSH proxy to use
 	Proxy string
+	// Idemeum tenant url (e.g: acme.idemeum.com)
+	IdemeumTenantUrl string
 	// TTL defines how long a session must be active (in minutes)
 	MinsToLive int32
 	// SSH Port on a remote SSH host
@@ -456,7 +458,7 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	app := utils.InitCLIParser("tsh", "Idemeum Command Line Client").Interspersed(false)
 	app.Flag("login", "Remote host login").Short('l').Envar(loginEnvVar).StringVar(&cf.NodeLogin)
 	// localUser, _ := client.Username()
-	app.Flag("proxy", "SSH proxy address").Envar(proxyEnvVar).StringVar(&cf.Proxy)
+	// app.Flag("proxy", "SSH proxy address").Envar(proxyEnvVar).StringVar(&cf.Proxy)
 	// app.Flag("nocache", "do not cache cluster discovery locally").Hidden().BoolVar(&cf.NoCache)
 	// app.Flag("user", fmt.Sprintf("SSH proxy user [%s]", localUser)).Envar(userEnvVar).StringVar(&cf.Username)
 	// app.Flag("mem-profile", "Write memory profile to file").Hidden().StringVar(&memProfile)
@@ -650,6 +652,7 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	// login logs in with remote proxy and obtains a "session certificate" which gets
 	// stored in ~/.tsh directory
 	login := app.Command("login", "Log in to a Remote Access server and retrieve the session certificate")
+	login.Flag("tenant-url", "Idemeum portal url (e.g: acme.idemeum.com)").StringVar(&cf.IdemeumTenantUrl)
 	login.Flag("out", "Identity output").Short('o').AllowDuplicate().StringVar(&cf.IdentityFileOut)
 	login.Flag("format", fmt.Sprintf("Identity format: %s, %s (for OpenSSH compatibility) ",
 		identityfile.DefaultFormat,
@@ -1207,6 +1210,18 @@ func onLogin(cf *CLIConf) error {
 	default:
 		return trace.BadParameter("invalid identity format: %s", cf.IdentityFormat)
 	}
+
+	if (cf.IdemeumTenantUrl == "") {
+		return trace.BadParameter("Missing tenant-url parameter.")
+	}
+
+	// parse the Idemeum tenant url and constuct the proxy url and set it on the CLIConfig
+	urlParts := strings.Split(cf.IdemeumTenantUrl, ".")
+	if (len(urlParts) != 3) {
+		return trace.BadParameter("tenant-url does not seem to be a valid Idemeum url (e.g: acme.idemeum.com is a valid Idemeum tenant url)")
+	}
+
+	cf.Proxy = strings.Join([]string{urlParts[0], "remote", urlParts[1], urlParts[2]}, ".")
 
 	// Get the status of the active profile as well as the status
 	// of any other proxies the user is logged into.
