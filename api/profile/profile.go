@@ -74,6 +74,8 @@ type Profile struct {
 	// email of the idemeum user
 	Email string `yaml:"email,omitempty"`
 	
+	// idemeum tenant url
+	IdemeumTenantUrl string `yaml:"idemeum_tenant_url,omitempty"`
 	// AuthType (like "google")
 	AuthType string `yaml:"auth_type,omitempty"`
 
