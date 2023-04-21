@@ -379,6 +379,8 @@ func (a *AuthenticateSSHRequest) CheckAndSetDefaults() error {
 type SSHLoginResponse struct {
 	// User contains a logged-in user information
 	Username string `json:"username"`
+	// email contains a logged-in user's email
+	Email string `json:"email"`
 	// Cert is a PEM encoded  signed certificate
 	Cert []byte `json:"cert"`
 	// TLSCertPEM is a PEM encoded TLS certificate signed by TLS certificate authority

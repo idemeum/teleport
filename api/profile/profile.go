@@ -71,6 +71,9 @@ type Profile struct {
 	// Username is the Teleport username for the client.
 	Username string `yaml:"user,omitempty"`
 
+	// email of the idemeum user
+	Email string `yaml:"email,omitempty"`
+	
 	// AuthType (like "google")
 	AuthType string `yaml:"auth_type,omitempty"`
 

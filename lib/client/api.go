@@ -172,6 +172,8 @@ type HostKeyCallback func(host string, ip net.Addr, key ssh.PublicKey) error
 type Config struct {
 	// Username is the Teleport account username (for logging into Teleport proxies)
 	Username string
+	// email set in idemeum
+	Email string
 	// ExplicitUsername is true if Username was initially set by the end-user
 	// (for example, using command-line flags).
 	ExplicitUsername bool
@@ -504,6 +506,9 @@ type ProfileStatus struct {
 	// Username is the Teleport username.
 	Username string
 
+	// Email of the user that logged in
+	Email string
+
 	// Roles is a list of Teleport Roles this user has been assigned.
 	Roles []string
 
@@ -766,6 +771,7 @@ type ProfileOptions struct {
 	ProfileDir    string
 	WebProxyAddr  string
 	Username      string
+	Email 		  string
 	SiteName      string
 	KubeProxyAddr string
 	IsVirtual     bool
@@ -870,6 +876,7 @@ func profileFromKey(key *Key, opts ProfileOptions) (*ProfileStatus, error) {
 			Host:   opts.WebProxyAddr,
 		},
 		Username:           opts.Username,
+		Email:			    opts.Email, 
 		Logins:             sshCert.ValidPrincipals,
 		ValidUntil:         validUntil,
 		Extensions:         extensions,
@@ -952,6 +959,7 @@ func ReadProfileStatus(profileDir string, profileName string) (*ProfileStatus, e
 		ProfileDir:    profileDir,
 		WebProxyAddr:  profile.WebProxyAddr,
 		Username:      profile.Username,
+		Email: 	       profile.Email,
 		SiteName:      profile.SiteName,
 		KubeProxyAddr: profile.KubeProxyAddr,
 		IsVirtual:     false,
@@ -1102,6 +1110,7 @@ func (c *Config) LoadProfile(profileDir string, proxyName string) error {
 	}
 
 	c.Username = cp.Username
+	c.Email = cp.Email
 	c.SiteName = cp.SiteName
 	c.KubeProxyAddr = cp.KubeProxyAddr
 	c.WebProxyAddr = cp.WebProxyAddr
@@ -1136,6 +1145,7 @@ func (c *Config) SaveProfile(dir string, makeCurrent bool) error {
 
 	var cp profile.Profile
 	cp.Username = c.Username
+	cp.Email = c.Email
 	cp.WebProxyAddr = c.WebProxyAddr
 	cp.SSHProxyAddr = c.SSHProxyAddr
 	cp.KubeProxyAddr = c.KubeProxyAddr
@@ -3203,6 +3213,7 @@ func (tc *TeleportClient) Login(ctx context.Context) (*Key, error) {
 
 	var response *auth.SSHLoginResponse
 	var username string
+	var email string
 	switch authType := pr.Auth.Type; {
 	case authType == constants.Local && pr.Auth.Local != nil && pr.Auth.Local.Name == constants.PasswordlessConnector:
 		// Sanity check settings.
@@ -3224,13 +3235,15 @@ func (tc *TeleportClient) Login(ctx context.Context) (*Key, error) {
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
-		username = response.Username
+		username = response.Username			
 	case authType == constants.SAML:
 		response, err = tc.ssoLogin(ctx, pr.Auth.SAML.Name, key.Pub, constants.SAML)
 		if err != nil {
 			return nil, trace.Wrap(err)
 		}
 		username = response.Username
+		log.Infof("Got back the user's email as %v", response.Email)
+		email = response.Email
 	case authType == constants.Github:
 		response, err = tc.ssoLogin(ctx, pr.Auth.Github.Name, key.Pub, constants.Github)
 		if err != nil {
@@ -3248,6 +3261,10 @@ func (tc *TeleportClient) Login(ctx context.Context) (*Key, error) {
 		}
 	}
 
+	if (email != "") {
+		log.Debugf("Setting the user's email address %v", email)
+		tc.Email = email
+	}
 	// Check that a host certificate for at least one cluster was returned.
 	if len(response.HostSigners) == 0 {
 		return nil, trace.BadParameter("bad response from the server: expected at least one certificate, got 0")

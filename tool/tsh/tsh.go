@@ -139,6 +139,8 @@ type CLIConf struct {
 	Proxy string
 	// Idemeum tenant url (e.g: acme.idemeum.com)
 	IdemeumTenantUrl string
+	// Idemeum email address of the user
+	Email string
 	// TTL defines how long a session must be active (in minutes)
 	MinsToLive int32
 	// SSH Port on a remote SSH host
@@ -1336,6 +1338,7 @@ func onLogin(cf *CLIConf) error {
 	// the login operation may update the username and should be considered the more
 	// "authoritative" source.
 	cf.Username = tc.Username
+	cf.Email = tc.Email
 
 	// TODO(fspmarshall): Refactor access request & cert reissue logic to allow
 	// access requests to be applied to identity files.
@@ -3179,7 +3182,7 @@ func printStatus(debug bool, p *client.ProfileStatus, isActive bool) {
 	}
 
 	fmt.Printf("%vProfile URL:        %v\n", prefix, p.ProxyURL.String())
-	fmt.Printf("  Logged in as:       %v\n", p.Username)
+	fmt.Printf("  Logged in as:       %v\n", p.Email)
 	if len(p.ActiveRequests.AccessRequests) != 0 {
 		fmt.Printf("  Active requests:    %v\n", strings.Join(p.ActiveRequests.AccessRequests, ", "))
 	}

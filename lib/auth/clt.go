@@ -1022,6 +1022,7 @@ func (c *Client) ValidateSAMLResponse(ctx context.Context, re string) (*SAMLAuth
 	}
 	response := SAMLAuthResponse{
 		Username:        rawResponse.Username,
+		Email: 			 rawResponse.Email,	
 		Identity:        rawResponse.Identity,
 		Cert:            rawResponse.Cert,
 		Req:             rawResponse.Req,
