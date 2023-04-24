@@ -3004,6 +3004,7 @@ func makeClientForProxy(cf *CLIConf, proxy string, useProfileLogin bool) (*clien
 	tc.Config.Reason = cf.Reason
 	tc.Config.Invited = cf.Invited
 	tc.Config.DisplayParticipantRequirements = cf.displayParticipantRequirements
+	tc.IdemeumTenantUrl = cf.IdemeumTenantUrl
 	return tc, nil
 }
 
@@ -3168,7 +3169,7 @@ func onShow(cf *CLIConf) error {
 
 // printStatus prints the status of the profile.
 func printStatus(debug bool, p *client.ProfileStatus, isActive bool) {
-	var count int
+	// var count int
 	var prefix string
 	if isActive {
 		prefix = "> "
@@ -3181,53 +3182,53 @@ func printStatus(debug bool, p *client.ProfileStatus, isActive bool) {
 		humanDuration = fmt.Sprintf("valid for %v", duration.Round(time.Minute))
 	}
 
-	fmt.Printf("%vProfile URL:        %v\n", prefix, p.ProxyURL.String())
+	fmt.Printf("%vIdemeum Tenant:     %v\n", prefix, p.IdemeumTenantUrl)
 	fmt.Printf("  Logged in as:       %v\n", p.Email)
-	if len(p.ActiveRequests.AccessRequests) != 0 {
-		fmt.Printf("  Active requests:    %v\n", strings.Join(p.ActiveRequests.AccessRequests, ", "))
-	}
-	if p.Cluster != "" {
-		fmt.Printf("  Cluster:            %v\n", p.Cluster)
-	}
-	fmt.Printf("  Roles:              %v\n", strings.Join(p.Roles, ", "))
-	if debug {
-		for k, v := range p.Traits {
-			if count == 0 {
-				fmt.Printf("  Traits:             %v: %v\n", k, v)
-			} else {
-				fmt.Printf("                      %v: %v\n", k, v)
-			}
-			count = count + 1
-		}
-	}
-	fmt.Printf("  Logins:             %v\n", strings.Join(p.Logins, ", "))
-	if p.KubeEnabled {
-		fmt.Printf("  Kubernetes:         enabled\n")
-		if kubeCluster := selectedKubeCluster(p.Cluster); kubeCluster != "" {
-			fmt.Printf("  Kubernetes cluster: %q\n", kubeCluster)
-		}
-		if len(p.KubeUsers) > 0 {
-			fmt.Printf("  Kubernetes users:   %v\n", strings.Join(p.KubeUsers, ", "))
-		}
-		if len(p.KubeGroups) > 0 {
-			fmt.Printf("  Kubernetes groups:  %v\n", strings.Join(p.KubeGroups, ", "))
-		}
-	} else {
-		fmt.Printf("  Kubernetes:         disabled\n")
-	}
-	if len(p.Databases) != 0 {
-		fmt.Printf("  Databases:          %v\n", strings.Join(p.DatabaseServices(), ", "))
-	}
-	if len(p.AllowedResourceIDs) > 0 {
-		allowedResourcesStr, err := types.ResourceIDsToString(p.AllowedResourceIDs)
-		if err != nil {
-			log.Warnf("failed to marshal allowed resource IDs to string: %v", err)
-		} else {
-			fmt.Printf("  Allowed Resources:  %s\n", allowedResourcesStr)
-		}
-	}
+	// if len(p.ActiveRequests.AccessRequests) != 0 {
+	// 	fmt.Printf("  Active requests:    %v\n", strings.Join(p.ActiveRequests.AccessRequests, ", "))
+	// }
+	// if p.Cluster != "" {
+	// 	fmt.Printf("  Cluster:            %v\n", p.Cluster)
+	// }
+	// fmt.Printf("  Roles:              %v\n", strings.Join(p.Roles, ", "))
+	// if debug {
+	// 	for k, v := range p.Traits {
+	// 		if count == 0 {
+	// 			fmt.Printf("  Traits:             %v: %v\n", k, v)
+	// 		} else {
+	// 			fmt.Printf("                      %v: %v\n", k, v)
+	// 		}
+	// 		count = count + 1
+	// 	}
+	// }
+	// fmt.Printf("  Logins:             %v\n", strings.Join(p.Logins, ", "))
+	// if p.KubeEnabled {
+	// 	fmt.Printf("  Kubernetes:         enabled\n")
+	// 	if kubeCluster := selectedKubeCluster(p.Cluster); kubeCluster != "" {
+	// 		fmt.Printf("  Kubernetes cluster: %q\n", kubeCluster)
+	// 	}
+	// 	if len(p.KubeUsers) > 0 {
+	// 		fmt.Printf("  Kubernetes users:   %v\n", strings.Join(p.KubeUsers, ", "))
+	// 	}
+	// 	if len(p.KubeGroups) > 0 {
+	// 		fmt.Printf("  Kubernetes groups:  %v\n", strings.Join(p.KubeGroups, ", "))
+	// 	}
+	// } else {
+	// 	fmt.Printf("  Kubernetes:         disabled\n")
+	// }
+	// if len(p.Databases) != 0 {
+	// 	fmt.Printf("  Databases:          %v\n", strings.Join(p.DatabaseServices(), ", "))
+	// }
+	// if len(p.AllowedResourceIDs) > 0 {
+	// 	allowedResourcesStr, err := types.ResourceIDsToString(p.AllowedResourceIDs)
+	// 	if err != nil {
+	// 		log.Warnf("failed to marshal allowed resource IDs to string: %v", err)
+	// 	} else {
+	// 		fmt.Printf("  Allowed Resources:  %s\n", allowedResourcesStr)
+	// 	}
+	// }
 	fmt.Printf("  Valid until:        %v [%v]\n", p.ValidUntil, humanDuration)
-	fmt.Printf("  Extensions:         %v\n", strings.Join(p.Extensions, ", "))
+	// fmt.Printf("  Extensions:         %v\n", strings.Join(p.Extensions, ", "))
 
 	if debug {
 		first := true

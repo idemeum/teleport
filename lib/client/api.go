@@ -174,6 +174,8 @@ type Config struct {
 	Username string
 	// email set in idemeum
 	Email string
+	// idemeum tenant url
+	IdemeumTenantUrl string
 	// ExplicitUsername is true if Username was initially set by the end-user
 	// (for example, using command-line flags).
 	ExplicitUsername bool
@@ -509,6 +511,9 @@ type ProfileStatus struct {
 	// Email of the user that logged in
 	Email string
 
+	// the url of the idemeum tenant
+	IdemeumTenantUrl string
+
 	// Roles is a list of Teleport Roles this user has been assigned.
 	Roles []string
 
@@ -772,6 +777,7 @@ type ProfileOptions struct {
 	WebProxyAddr  string
 	Username      string
 	Email 		  string
+	IdemeumTenantUrl string
 	SiteName      string
 	KubeProxyAddr string
 	IsVirtual     bool
@@ -877,6 +883,7 @@ func profileFromKey(key *Key, opts ProfileOptions) (*ProfileStatus, error) {
 		},
 		Username:           opts.Username,
 		Email:			    opts.Email, 
+		IdemeumTenantUrl:   opts.IdemeumTenantUrl,
 		Logins:             sshCert.ValidPrincipals,
 		ValidUntil:         validUntil,
 		Extensions:         extensions,
@@ -960,6 +967,7 @@ func ReadProfileStatus(profileDir string, profileName string) (*ProfileStatus, e
 		WebProxyAddr:  profile.WebProxyAddr,
 		Username:      profile.Username,
 		Email: 	       profile.Email,
+		IdemeumTenantUrl: profile.IdemeumTenantUrl ,	
 		SiteName:      profile.SiteName,
 		KubeProxyAddr: profile.KubeProxyAddr,
 		IsVirtual:     false,
@@ -1146,6 +1154,7 @@ func (c *Config) SaveProfile(dir string, makeCurrent bool) error {
 	var cp profile.Profile
 	cp.Username = c.Username
 	cp.Email = c.Email
+	cp.IdemeumTenantUrl = c.IdemeumTenantUrl
 	cp.WebProxyAddr = c.WebProxyAddr
 	cp.SSHProxyAddr = c.SSHProxyAddr
 	cp.KubeProxyAddr = c.KubeProxyAddr
