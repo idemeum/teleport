@@ -141,9 +141,11 @@ func (h *Handler) samlACS(w http.ResponseWriter, r *http.Request, p httprouter.P
 		return client.LoginFailedRedirectURL
 	}
 
+	log.Infof("Setting the email to %v", response.Email)
 	redirectURL, err := ConstructSSHResponse(AuthParams{
 		ClientRedirectURL: response.Req.ClientRedirectURL,
 		Username:          response.Username,
+		Email: 			   response.Email,
 		Identity:          response.Identity,
 		Session:           response.Session,
 		Cert:              response.Cert,
