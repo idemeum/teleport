@@ -278,12 +278,13 @@ func newTestAuthServer(ctx context.Context, t *testing.T, name ...string) *Serve
 	clusterNameRes, err := services.NewClusterNameWithRandomID(types.ClusterNameSpecV2{
 		ClusterName: clusterName,
 	})
+
 	require.NoError(t, err)
 	authConfig := &InitConfig{
 		ClusterName:            clusterNameRes,
 		Backend:                bk,
 		Authority:              authority.New(),
-		EncryptionService:      &encryption.TestEncryptionService{},
+		EncryptionService:      encryption.NewEncryptionService(nil),
 		SkipPeriodicOperations: true,
 	}
 	a, err := NewServer(authConfig)

@@ -1124,7 +1124,7 @@ func encryptCertAuthorities(ctx context.Context, asrv *Server) error {
 
 		for _, item := range result.Items {
 			if err := encryptCertAuthority(asrv, item); err != nil {
-				errors = append(errors, trace.Wrap(err, "failed to encrypt key %v", item.Key, err))
+				errors = append(errors, trace.Wrap(err, "failed to encrypt key %v", string(item.Key), err))
 				continue
 			}
 		}
@@ -1145,13 +1145,14 @@ func encryptCertAuthority(asrv *Server, item backend.Item) error {
 	if err != nil {
 		return trace.Wrap(err)
 	}
-	if encryptedValue.Encrypted {
-		log.Infof("Cert authority:%v already encrypted, skipping it", item.Key)
+	if encryptedValue.Nonce != nil {
+		log.Infof("Cert authority:%v already encrypted, skipping it", string(item.Key))
 		return nil
 	}
 
 	itemEncrypter := encryption.NewItemEncryptionService(asrv.EncryptionService)
 
+	log.Infof("encrypting the cert authority: %v", string(item.Key))
 	newItem, err := itemEncrypter.Encrypt(&item)
 	if err != nil {
 		return trace.Wrap(err)
@@ -1164,6 +1165,7 @@ func encryptCertAuthority(asrv *Server, item backend.Item) error {
 		return trace.Wrap(err)
 	}
 
+	log.Infof("decrypting the cert authority name : %v", string(newItem.Key))
 	decryptedItem, err := itemEncrypter.Decrypt(newItem)
 
 	if err != nil {
@@ -1183,7 +1185,7 @@ func encryptCertAuthority(asrv *Server, item backend.Item) error {
 	if !services.CertAuthoritiesEquivalent(beforeEncryptCA, afterEncryptCA) {
 		return trace.CompareFailed("cluster %v settings have been updated, try again", beforeEncryptCA.GetName())
 	}
-	log.Infof("Verified the cert authority to ensure the CA cert should match with old one")
+	log.Infof("Verified the cert authority to ensure that CA cert should match with old one")
 
 	return nil
 

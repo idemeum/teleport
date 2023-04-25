@@ -1,114 +1,124 @@
 package encryption
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/kms"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"encoding/json"
+	"io"
+
 	"github.com/gravitational/trace"
 	log "github.com/sirupsen/logrus"
 )
 
+type EncryptedValue struct {
+	// value which is encrypted using the key
+	Value []byte
+	// Nonce used for every value encryption using the key
+	Nonce []byte
+}
+
 type EncryptionService interface {
 	Encrypt(text []byte) ([]byte, error)
-	Decrypt(data []byte) ([]byte, error)
+	Decrypt(holder EncryptedValue) ([]byte, error)
 }
 
-type KMSEncryptionConfig struct {
-	ClusterName string
-	Region      string
-	KmsKeyId    string
-	Enabled     bool
-}
-
-func (cfg *KMSEncryptionConfig) CheckAndSetDefaults() error {
-	if !cfg.Enabled {
-		return nil
-	}
-
-	if cfg.ClusterName == "" {
-		log.Info("encryption service config cluster name is missing")
-		return trace.BadParameter("encryption service missing cluster name")
-	}
-
-	if cfg.Region == "" {
-		log.Info("encryption service config region is missing")
-		return trace.BadParameter("encryption service missing region")
-	}
-
-	if cfg.KmsKeyId == "" {
-		log.Info("encryption service config KmsKeyId is missing")
-		return trace.BadParameter("encryption service missing KmsKeyId")
-	}
-	return nil
-}
-
-func NewEncryptionService(config KMSEncryptionConfig) EncryptionService {
-	config.CheckAndSetDefaults()
-	if config.Enabled {
-		log.Infof("Encryption service enabled for cluster: %v", config.ClusterName)
-		return newKMSEncryptionService(config)
-	}
-
-	log.Info("Encryption service not enabled")
-	return nil
+func NewEncryptionService(dekService DataEncryptionKeyService) EncryptionService {
+	return &kmsEncryptionService{dekService}
 }
 
 type kmsEncryptionService struct {
-	kmsService *kms.KMS
-	cfg        KMSEncryptionConfig
-}
-
-func newKMSEncryptionService(cfg KMSEncryptionConfig) EncryptionService {
-	log.Info("Initializing the kms service")
-	session := session.Must(session.NewSession(&aws.Config{
-		Region: &cfg.Region,
-	}))
-
-	kmsService := kms.New(session)
-	log.Info("Initialized the kms encryption service")
-	return &kmsEncryptionService{kmsService, cfg}
+	dekService DataEncryptionKeyService
 }
 
 func (s *kmsEncryptionService) Encrypt(text []byte) ([]byte, error) {
-	result, err := s.kmsService.Encrypt(&kms.EncryptInput{
-		KeyId:             aws.String(s.cfg.KmsKeyId),
-		Plaintext:         []byte(text),
-		EncryptionContext: getEncryptionContext(s.cfg.ClusterName),
-	})
+	if s.dekService == nil {
+		return text, nil
+	}
 
-	return result.CiphertextBlob, err
+	dataEncryptionKey, err := s.dekService.getKey()
+	if err != nil {
+		log.Error("Failed to get data encryption data key", err)
+		return nil, err
+	}
+
+	cipherText, nonce, err := aesGcmEncrypt(dataEncryptionKey, text)
+	if err != nil {
+		log.Error("Failed to encrypt data using data encryption key", err)
+		return nil, err
+	}
+	// Initialize payload
+	p := EncryptedValue{
+		Value: cipherText,
+		Nonce: nonce,
+	}
+
+	log.Debug("encrypted data successfully")
+	return json.Marshal(p)
 }
 
 // Decrypt implements EncryptionService
-func (s *kmsEncryptionService) Decrypt(data []byte) ([]byte, error) {
-	result, err := s.kmsService.Decrypt(&kms.DecryptInput{
-		KeyId:             aws.String(s.cfg.KmsKeyId),
-		CiphertextBlob:    []byte(data),
-		EncryptionContext: getEncryptionContext(s.cfg.ClusterName),
-	})
+func (s *kmsEncryptionService) Decrypt(p EncryptedValue) ([]byte, error) {
+	if p.Nonce == nil {
+		return p.Value, nil
+	}
 
-	return result.Plaintext, err
+	if s.dekService == nil {
+		log.Errorf("data encryption key service not configured, failing to decrypt the data")
+		return nil, trace.Errorf("data encryption key service not configured")
+	}
+
+	dataEncryptionKey, err := s.dekService.getKey()
+	if err != nil {
+		log.Error("Failed to get data encryption data key", err)
+		return nil, err
+	}
+
+	log.Debug("decrypting the data")
+	return aesGcmDecrypt(dataEncryptionKey, p.Value, p.Nonce)
 }
 
-type TestEncryptionService struct {
+// aesGcmEncrypt takes an encryption key and a plaintext and encrypts it with AES256 in GCM mode,
+// which provides authenticated encryption. Returns the ciphertext and the used nonce.
+func aesGcmEncrypt(key, plaintextBytes []byte) (ciphertext, nonce []byte, err error) {
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Never use more than 2^32 random nonces with a given key because of the risk of a repeat.
+	nonce = make([]byte, 12)
+	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+		return nil, nil, err
+	}
+
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ciphertext = aesgcm.Seal(nil, nonce, plaintextBytes, nil)
+	return ciphertext, nonce, nil
 }
 
-// Encrypt implements EncryptionService
-func (*TestEncryptionService) Encrypt(data []byte) ([]byte, error) {
-	log.Info("encrypting")
-	encrypted := string("test") + string(data)
-	return []byte(encrypted), nil
-}
+// aesGcmDecrypt takes an decryption key, a ciphertext
+// and the corresponding nonce and decrypts it with AES256 in GCM mode. Returns the plaintext string.
+func aesGcmDecrypt(key, ciphertext, nonce []byte) (plaintext []byte, err error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
 
-// Decrypt implements EncryptionService
-func (*TestEncryptionService) Decrypt(data []byte) ([]byte, error) {
-	log.Info("decrypting")
-	//remove "test"
-	return data[4:], nil
-}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
 
-func getEncryptionContext(ClusterName string) map[string]*string {
-	encryptionContext := make(map[string]*string)
-	encryptionContext["clusterName"] = aws.String(ClusterName)
-	return encryptionContext
+	plaintextBytes, err := aesgcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintextBytes, nil
 }

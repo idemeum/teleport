@@ -3,9 +3,9 @@ package encryption
 import (
 	"encoding/json"
 
-	"github.com/cloudflare/cfssl/log"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/trace"
+	log "github.com/sirupsen/logrus"
 )
 
 type ItemEncrypter interface {
@@ -24,15 +24,7 @@ func NewItemEncryptionService(es EncryptionService) ItemEncrypter {
 
 func (s *itemEncrypter) Encrypt(item *backend.Item) (*backend.Item, error) {
 	if s.es != nil {
-		itemEncryptedValue, err := s.es.Encrypt(item.Value)
-		if err != nil {
-			return item, trace.Wrap(err)
-		}
-		encryptedValue, err := json.Marshal(EncryptedValue{
-			Value:     itemEncryptedValue,
-			Encrypted: true,
-		})
-
+		encryptedValue, err := s.es.Encrypt(item.Value)
 		if err != nil {
 			return item, trace.Wrap(err)
 		}
@@ -45,29 +37,31 @@ func (s *itemEncrypter) Encrypt(item *backend.Item) (*backend.Item, error) {
 			LeaseID: item.LeaseID,
 		}
 		return newItem, nil
-
 	}
+
 	return item, nil
 }
 
 func (s *itemEncrypter) Decrypt(item *backend.Item) (*backend.Item, error) {
+
 	encryptedValue, err := ToEncryptedValue(item.Value)
 	if err != nil {
-		return item, trace.Wrap(err)
+		return nil, trace.Wrap(err)
 	}
 
-	if !encryptedValue.Encrypted {
+	if encryptedValue.Nonce == nil {
 		return item, nil
 	}
 
-	if encryptedValue.Encrypted && s.es == nil {
-		return item, trace.BadParameter("trust service missing encryption service")
+	if s.es == nil {
+		return nil, trace.BadParameter("item encrypter service missing encryption service")
 	}
 
-	value, err := s.es.Decrypt(encryptedValue.Value)
+	value, err := s.es.Decrypt(encryptedValue)
 	if err != nil {
-		return item, err
+		return nil, err
 	}
+
 	newItem := &backend.Item{
 		Key:     item.Key,
 		Value:   value,
@@ -78,14 +72,9 @@ func (s *itemEncrypter) Decrypt(item *backend.Item) (*backend.Item, error) {
 	return newItem, nil
 }
 
-type EncryptedValue struct {
-	Value     []byte
-	Encrypted bool
-}
-
 func ToEncryptedValue(data []byte) (EncryptedValue, error) {
 	if !json.Valid(data) {
-		return EncryptedValue{Value: data, Encrypted: false}, nil
+		return EncryptedValue{Value: data}, nil
 	}
 
 	encryptedValue := EncryptedValue{}
