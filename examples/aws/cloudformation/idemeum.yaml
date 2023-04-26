@@ -36,13 +36,14 @@ Parameters:
   RemoteAccessVersion:
     Description: Remote Access version
     Type: String
-    Default: 1.0.0.c8292bf0e
+    Default: 1.0.0.3d7fc175b4
     AllowedValues:
     - 1.0.0.c8292bf0e
     - 1.0.0.5cde3fe13
     - 1.0.0.92ade14d5
     - 1.0.0.1918067ae
     - 1.0.0.b50a1788d
+    - 1.0.0.3d7fc175b4
 
   Mode:
     Description: Allows deactivation of stack that would shut down compute and load balancers
@@ -89,6 +90,10 @@ Mappings:
       GitHash: b50a1788d
       APSOUTH1: ami-0945be6373281808d
       USAWEST2: ami-0e444164f0335fcd7
+    1.0.0.3d7fc175b4:
+      GitHash: 3d7fc175b4
+      APSOUTH1: ami-0f19f59632bacb85e
+      USAWEST2: ami-06c219a066aef32d2  
 
   DeploymentTypeConfig:
     LA-Starter:
