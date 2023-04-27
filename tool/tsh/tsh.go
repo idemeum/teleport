@@ -1653,9 +1653,9 @@ func onLogout(cf *CLIConf) error {
 
 // onListNodes executes 'tsh ls' command.
 func onListNodes(cf *CLIConf) error {
-	if cf.ListAll {
-		return trace.Wrap(listNodesAllClusters(cf))
-	}
+	// if cf.ListAll {
+	// 	return trace.Wrap(listNodesAllClusters(cf))
+	// }
 
 	tc, err := makeClient(cf, true)
 	if err != nil {
@@ -1675,11 +1675,70 @@ func onListNodes(cf *CLIConf) error {
 		return nodes[i].GetHostname() < nodes[j].GetHostname()
 	})
 
-	if err := printNodes(nodes, cf.Format, cf.Verbose); err != nil {
+	entitlements, err := getIdemeumEntitlements(tc)
+	nodeEntitlements := getServerNodeEntilements(nodes, entitlements)
+
+	if err := printNodes(nodes, nodeEntitlements, cf.Format, cf.Verbose); err != nil {
 		return trace.Wrap(err)
 	}
 
 	return nil
+}
+
+// the entitlement format for windows and server nodes are u:<app_id>:username
+func getServerNodeEntilements(nodes []types.Server, entitlements []string) map[string][]string {
+	allEntilements := make(map[string][]string)
+	for _, e := range entitlements {
+		parts := strings.Split(e, ":")
+		if (len(parts) == 3) {
+			existingLogins := allEntilements[parts[1]];
+			if existingLogins == nil {
+				existingLogins = make([]string, 0)		
+			}
+
+			existingLogins = append(existingLogins, parts[2])
+
+			allEntilements[parts[1]] = existingLogins
+		}
+	}
+
+	nodeEntitlements := make(map[string][]string)
+
+	for _, n := range nodes {
+		nodeId := n.GetIdemeumAppId()
+		userNames := allEntilements[nodeId]
+		
+		if (userNames != nil) {
+			nodeEntitlements[nodeId] = userNames
+		}
+		
+	}
+
+	return nodeEntitlements
+}
+
+// read the pem cert of the user and parse the entitlments traits from there
+func getIdemeumEntitlements(tc *client.TeleportClient) ([]string, error) {
+	clusterName := tc.Config.SiteName
+	key, err := tc.LocalAgent().GetKey(clusterName)
+	if (err != nil) {
+		return nil, trace.Wrap(err)
+	}
+	// parse the tls cert to get the entitlements
+	tlsCert, err := key.TeleportTLSCertificate()
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	tlsID, err := tlsca.FromSubject(tlsCert.Subject, time.Time{})
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	// entitlements are under idemeum_entitlements key
+	entitlements := tlsID.Traits["idemeum_entitlements"]
+
+	return entitlements, nil
 }
 
 type nodeListing struct {
@@ -1708,66 +1767,66 @@ func (l nodeListings) Swap(i, j int) {
 	l[i], l[j] = l[j], l[i]
 }
 
-func listNodesAllClusters(cf *CLIConf) error {
-	var listings nodeListings
+// func listNodesAllClusters(cf *CLIConf) error {
+// 	var listings nodeListings
 
-	err := forEachProfile(cf, func(tc *client.TeleportClient, profile *client.ProfileStatus) error {
-		result, err := tc.ListNodesWithFiltersAllClusters(cf.Context)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		for clusterName, nodes := range result {
-			for _, node := range nodes {
-				listings = append(listings, nodeListing{
-					Proxy:   profile.ProxyURL.Host,
-					Cluster: clusterName,
-					Node:    node,
-				})
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		return trace.Wrap(err)
-	}
+// 	err := forEachProfile(cf, func(tc *client.TeleportClient, profile *client.ProfileStatus) error {
+// 		result, err := tc.ListNodesWithFiltersAllClusters(cf.Context)
+// 		if err != nil {
+// 			return trace.Wrap(err)
+// 		}
+// 		for clusterName, nodes := range result {
+// 			for _, node := range nodes {
+// 				listings = append(listings, nodeListing{
+// 					Proxy:   profile.ProxyURL.Host,
+// 					Cluster: clusterName,
+// 					Node:    node,
+// 				})
+// 			}
+// 		}
+// 		return nil
+// 	})
+// 	if err != nil {
+// 		return trace.Wrap(err)
+// 	}
 
-	sort.Sort(listings)
+// 	sort.Sort(listings)
 
-	format := strings.ToLower(cf.Format)
-	switch format {
-	case teleport.Text, "":
-		printNodesWithClusters(listings, cf.Verbose)
-	case teleport.JSON, teleport.YAML:
-		out, err := serializeNodesWithClusters(listings, format)
-		if err != nil {
-			return trace.Wrap(err)
-		}
-		fmt.Println(out)
-	default:
-		return trace.BadParameter("unsupported format %q", format)
-	}
+// 	format := strings.ToLower(cf.Format)
+// 	switch format {
+// 	case teleport.Text, "":
+// 		printNodesWithClusters(listings, cf.Verbose)
+// 	case teleport.JSON, teleport.YAML:
+// 		out, err := serializeNodesWithClusters(listings, format)
+// 		if err != nil {
+// 			return trace.Wrap(err)
+// 		}
+// 		fmt.Println(out)
+// 	default:
+// 		return trace.BadParameter("unsupported format %q", format)
+// 	}
 
-	// Sometimes a user won't see any nodes because they're missing principals.
-	if len(listings) == 0 {
-		fmt.Fprintln(os.Stderr, missingPrincipalsFooter)
-	}
+// 	// Sometimes a user won't see any nodes because they're missing principals.
+// 	if len(listings) == 0 {
+// 		fmt.Fprintln(os.Stderr, missingPrincipalsFooter)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func printNodesWithClusters(nodes []nodeListing, verbose bool) {
-	var rows [][]string
-	for _, n := range nodes {
-		rows = append(rows, getNodeRow(n.Proxy, n.Cluster, n.Node, verbose))
-	}
-	var t asciitable.Table
-	if verbose {
-		t = asciitable.MakeTable([]string{"Proxy", "Cluster", "Node Name", "Node ID", "Address", "Labels"}, rows...)
-	} else {
-		t = asciitable.MakeTableWithTruncatedColumn([]string{"Proxy", "Cluster", "Node Name", "Address", "Labels"}, rows, "Labels")
-	}
-	fmt.Println(t.AsBuffer().String())
-}
+// func printNodesWithClusters(nodes []nodeListing, verbose bool) {
+// 	var rows [][]string
+// 	for _, n := range nodes {
+// 		rows = append(rows, getNodeRow(n.Proxy, n.Cluster, n.Node, verbose))
+// 	}
+// 	var t asciitable.Table
+// 	if verbose {
+// 		t = asciitable.MakeTable([]string{"Proxy", "Cluster", "Node Name", "Node ID", "Address", "Labels"}, rows...)
+// 	} else {
+// 		t = asciitable.MakeTableWithTruncatedColumn([]string{"Proxy", "Cluster", "Node Name", "Address", "Labels"}, rows, "Labels")
+// 	}
+// 	fmt.Println(t.AsBuffer().String())
+// }
 
 func serializeNodesWithClusters(nodes []nodeListing, format string) (string, error) {
 	var out []byte
@@ -1898,11 +1957,11 @@ func executeAccessRequest(cf *CLIConf, tc *client.TeleportClient) error {
 	return trace.Wrap(onRequestResolution(cf, tc, resolvedReq))
 }
 
-func printNodes(nodes []types.Server, format string, verbose bool) error {
+func printNodes(nodes []types.Server, nodeEntitlements map[string][]string, format string, verbose bool) error {
 	format = strings.ToLower(format)
 	switch format {
 	case teleport.Text, "":
-		printNodesAsText(nodes, verbose)
+		printNodesAsText(nodes, nodeEntitlements, verbose)
 	case teleport.JSON, teleport.YAML:
 		out, err := serializeNodes(nodes, format)
 		if err != nil {
@@ -1939,43 +1998,48 @@ func serializeNodes(nodes []types.Server, format string) (string, error) {
 	return string(out), trace.Wrap(err)
 }
 
-func getNodeRow(proxy, cluster string, node types.Server, verbose bool) []string {
-	// Reusable function to get addr or tunnel for each node
-	getAddr := func(n types.Server) string {
-		if n.GetUseTunnel() {
-			return "⟵ Tunnel"
-		}
-		return n.GetAddr()
-	}
+func getNodeRow(proxy, cluster string, node types.Server, logins []string, verbose bool) []string {
+	// // Reusable function to get addr or tunnel for each node
+	// getAddr := func(n types.Server) string {
+	// 	if n.GetUseTunnel() {
+	// 		return "⟵ Tunnel"
+	// 	}
+	// 	return n.GetAddr()
+	// }
 
 	row := make([]string, 0)
-	if proxy != "" && cluster != "" {
-		row = append(row, proxy, cluster)
-	}
+	// if proxy != "" && cluster != "" {
+	// 	row = append(row, proxy, cluster)
+	// }
 
+	// sort the logins
+	sort.Strings(logins)	
+
+	// verbose or not we are displaying the same information. Do not display the proxy or cluster as it 
+	// does not make any sense for the enduser
 	if verbose {
-		row = append(row, node.GetHostname(), node.GetName(), getAddr(node), node.LabelsString())
+		row = append(row, node.GetHostname(), strings.Join(logins, ","))
 	} else {
-		row = append(row, node.GetHostname(), getAddr(node), sortedLabels(node.GetAllLabels()))
+		row = append(row, node.GetHostname(), strings.Join(logins, ","))
 	}
 	return row
 }
 
-func printNodesAsText(nodes []types.Server, verbose bool) {
+func printNodesAsText(nodes []types.Server, serverEntitlements map[string][]string, verbose bool) {
 	var rows [][]string
 	for _, n := range nodes {
-		rows = append(rows, getNodeRow("", "", n, verbose))
+		rows = append(rows, getNodeRow("", "", n, serverEntitlements[n.GetIdemeumAppId()], verbose))
 	}
 	var t asciitable.Table
 	switch verbose {
 	// In verbose mode, print everything on a single line and include the Node
 	// ID (UUID). Useful for machines that need to parse the output of "tsh ls".
 	case true:
-		t = asciitable.MakeTable([]string{"Node Name", "Node ID", "Address", "Labels"}, rows...)
+		t = asciitable.MakeTable([]string{"Node Name", "Users"}, rows...)
 	// In normal mode chunk the labels and print two per line and allow multiple
 	// lines per node.
 	case false:
-		t = asciitable.MakeTableWithTruncatedColumn([]string{"Node Name", "Address", "Labels"}, rows, "Labels")
+		t = asciitable.MakeTableWithTruncatedColumn([]string{"Node Name", "Users"}, rows, "Users")
 	}
 	fmt.Println(t.AsBuffer().String())
 }
@@ -2532,8 +2596,12 @@ func onSSH(cf *CLIConf) error {
 				if err != nil {
 					return trace.Wrap(err)
 				}
+				
+				entitlements, _ := getIdemeumEntitlements(tc)
+				nodeEntitlements := getServerNodeEntilements(nodes, entitlements)			
+
 				fmt.Fprintf(os.Stderr, "error: ambiguous host could match multiple nodes\n\n")
-				printNodesAsText(nodes, true)
+				printNodesAsText(nodes, nodeEntitlements, true)
 				fmt.Fprintf(os.Stderr, "Hint: try addressing the node by unique id (ex: tsh ssh user@node-id)\n")
 				fmt.Fprintf(os.Stderr, "Hint: use 'tsh ls -v' to list all nodes with their unique ids\n")
 				fmt.Fprintf(os.Stderr, "\n")
