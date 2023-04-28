@@ -2737,9 +2737,13 @@ func makeClientForProxy(cf *CLIConf, proxy string, useProfileLogin bool) (*clien
 		return nil, trace.Wrap(err)
 	}
 
-	// apply defaults
+	// apply defaults (by default only issue a certificate for 1 hour)
 	if cf.MinsToLive == 0 {
-		cf.MinsToLive = int32(apidefaults.CertDuration / time.Minute)
+		cf.MinsToLive = int32(60)
+	}
+
+	if (cf.MinsToLive > int32(apidefaults.CertDuration / time.Minute)) {
+		return nil, trace.BadParameter("Maximum ttl allowed is 12hours (720 minutes)")		
 	}
 
 	// split login & host
