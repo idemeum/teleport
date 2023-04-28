@@ -67,7 +67,7 @@ func TestLoadAllConfigs(t *testing.T) {
 		}},
 	}
 
-	homeDir := path.Join(tmp, "home", "myuser", ".tsh")
+	homeDir := path.Join(tmp, "home", "myuser", ".ish")
 	userPath := path.Join(homeDir, "config", "config.yaml")
 	userConf := TshConfig{
 		ExtraHeaders: []ExtraProxyHeaders{{
