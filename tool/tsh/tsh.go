@@ -457,7 +457,7 @@ func Run(ctx context.Context, args []string, opts ...cliOption) error {
 	var cpuProfile, memProfile string
 
 	// configure CLI argument parser:
-	app := utils.InitCLIParser("tsh", "Idemeum Command Line Client").Interspersed(false)
+	app := utils.InitCLIParser("ish", "Idemeum Command Line Client").Interspersed(false)
 	app.Flag("login", "Remote host login").Short('l').Envar(loginEnvVar).StringVar(&cf.NodeLogin)
 	// localUser, _ := client.Username()
 	// app.Flag("proxy", "SSH proxy address").Envar(proxyEnvVar).StringVar(&cf.Proxy)

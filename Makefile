@@ -33,7 +33,7 @@ TELEPORT_DEBUG ?= no
 GITTAG=v$(IDEMEUM_VERSION)
 BUILDFLAGS ?= $(ADDFLAGS) -ldflags '-w -s'
 CGOFLAG ?= CGO_ENABLED=1
-CGOFLAG_TSH ?= CGO_ENABLED=1
+CGOFLAG_ISH ?= CGO_ENABLED=1
 # Windows requires extra parameters to cross-compile with CGO.
 ifeq ("$(OS)","windows")
 ARCH ?= amd64
@@ -42,22 +42,22 @@ $(error "Building for windows requires ARCH=amd64")
 endif
 BUILDFLAGS = $(ADDFLAGS) -ldflags '-w -s' -buildmode=exe
 CGOFLAG = CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
-CGOFLAG_TSH = $(CGOFLAG)
+CGOFLAG_ISH = $(CGOFLAG)
 endif
 
 ifeq ("$(OS)","linux")
 # Link static version of libgcc to reduce system dependencies.
 CGOFLAG ?= CGO_ENABLED=1 CGO_LDFLAGS="-Wl,--as-needed"
-CGOFLAG_TSH ?= CGO_ENABLED=1 CGO_LDFLAGS="-Wl,--as-needed"
+CGOFLAG_ISH ?= CGO_ENABLED=1 CGO_LDFLAGS="-Wl,--as-needed"
 # ARM builds need to specify the correct C compiler
 ifeq ("$(ARCH)","arm")
 CGOFLAG = CGO_ENABLED=1 CC=arm-linux-gnueabihf-gcc
-CGOFLAG_TSH = $(CGOFLAG)
+CGOFLAG_ISH = $(CGOFLAG)
 endif
 # ARM64 builds need to specify the correct C compiler
 ifeq ("$(ARCH)","arm64")
 CGOFLAG = CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc
-CGOFLAG_TSH = $(CGOFLAG)
+CGOFLAG_ISH = $(CGOFLAG)
 endif
 endif
 
@@ -120,7 +120,7 @@ CLANG_BPF_SYS_INCLUDES = $(shell $(CLANG) -v -E - </dev/null 2>&1 \
 	| sed -n '/<...> search starts here:/,/End of search list./{ s| \(/.*\)|-idirafter \1|p }')
 
 CGOFLAG = CGO_ENABLED=1 CGO_LDFLAGS="-Wl,-Bstatic -lbpf -lelf -lz -Wl,-Bdynamic -Wl,--as-needed"
-CGOFLAG_TSH = CGO_ENABLED=1
+CGOFLAG_ISH = CGO_ENABLED=1
 endif
 endif
 endif
@@ -159,7 +159,7 @@ ifeq ("$(shell pkg-config libfido2 2>/dev/null; echo $$?)", "0")
 LIBFIDO2_TEST_TAG := libfido2
 endif
 
-# Build tsh against libfido2?
+# Build ish against libfido2?
 # Only build if FIDO2=yes, each platform we support must make this decision
 # explicitly.
 LIBFIDO2_MESSAGE := without libfido2
@@ -183,12 +183,12 @@ ifneq ("$(OS)","linux")
 REPRODUCIBLE = no
 endif
 
-# On Windows only build tsh. On all other platforms build teleport, tctl,
-# and tsh.
-BINARIES=$(BUILDDIR)/teleport $(BUILDDIR)/tctl $(BUILDDIR)/tsh $(BUILDDIR)/tbot
+# On Windows only build ish. On all other platforms build teleport, tctl,
+# and ish.
+BINARIES=$(BUILDDIR)/teleport $(BUILDDIR)/tctl $(BUILDDIR)/ish $(BUILDDIR)/tbot
 RELEASE_MESSAGE := "Building with GOOS=$(OS) GOARCH=$(ARCH) REPRODUCIBLE=$(REPRODUCIBLE) and $(PAM_MESSAGE) and $(FIPS_MESSAGE) and $(BPF_MESSAGE) and $(RDPCLIENT_MESSAGE) and $(LIBFIDO2_MESSAGE) and $(TOUCHID_MESSAGE)."
 ifeq ("$(OS)","windows")
-BINARIES=$(BUILDDIR)/tsh
+BINARIES=$(BUILDDIR)/ish
 endif
 
 # On platforms that support reproducible builds, ensure the archive is created in a reproducible manner.
@@ -219,7 +219,7 @@ all: version
 	@echo "---> Building OSS binaries."
 	$(MAKE) $(BINARIES)
 
-# By making these 3 targets below (tsh, tctl and teleport) PHONY we are solving
+# By making these 3 targets below (ish, tctl and teleport) PHONY we are solving
 # several problems:
 # * Build will rely on go build internal caching https://golang.org/doc/go1.10 at all times
 # * Manual change detection was broken on a large dependency tree
@@ -232,9 +232,9 @@ $(BUILDDIR)/tctl:
 $(BUILDDIR)/teleport: ensure-webassets bpf-bytecode rdpclient
 	GOOS=$(OS) GOARCH=$(ARCH) $(CGOFLAG) go build -tags "$(PAM_TAG) $(FIPS_TAG) $(BPF_TAG) $(WEBASSETS_TAG) $(RDPCLIENT_TAG)" -o $(BUILDDIR)/idemeum $(BUILDFLAGS) ./tool/teleport
 
-.PHONY: $(BUILDDIR)/tsh
-$(BUILDDIR)/tsh:
-	GOOS=$(OS) GOARCH=$(ARCH) $(CGOFLAG_TSH) go build -tags "$(FIPS_TAG) $(LIBFIDO2_BUILD_TAG) $(TOUCHID_TAG)" -o $(BUILDDIR)/tsh $(BUILDFLAGS) ./tool/tsh
+.PHONY: $(BUILDDIR)/ish
+$(BUILDDIR)/ish:
+	GOOS=$(OS) GOARCH=$(ARCH) $(CGOFLAG_ISH) go build -tags "$(FIPS_TAG) $(LIBFIDO2_BUILD_TAG) $(TOUCHID_TAG)" -o $(BUILDDIR)/ish $(BUILDFLAGS) ./tool/tsh
 
 .PHONY: $(BUILDDIR)/tbot
 $(BUILDDIR)/tbot:
@@ -294,7 +294,7 @@ endif
 #
 # make full - Builds Teleport binaries with the built-in web assets and
 # places them into $(BUILDDIR). On Windows, this target is skipped because
-# only tsh is built.
+# only ish is built.
 #
 .PHONY:full
 full: $(ASSETS_BUILDDIR)/webassets
@@ -363,7 +363,7 @@ release-arm64:
 
 #
 # make release-unix - Produces a binary release tarball containing teleport,
-# tctl, and tsh.
+# tctl, and ish.
 #
 .PHONY:
 release-unix: clean full
@@ -550,7 +550,7 @@ ifneq ("$(TOUCHID_TAG)", "")
 		| tee $(TEST_LOG_DIR)/unit.json \
 		| ${RENDER_TESTS}
 endif
-	$(CGOFLAG_TSH) go test -cover -json -tags "$(PAM_TAG) $(FIPS_TAG) $(LIBFIDO2_TEST_TAG) $(TOUCHID_TAG)" github.com/gravitational/teleport/tool/tsh $(FLAGS) $(ADDFLAGS) \
+	$(CGOFLAG_ISH) go test -cover -json -tags "$(PAM_TAG) $(FIPS_TAG) $(LIBFIDO2_TEST_TAG) $(TOUCHID_TAG)" github.com/gravitational/teleport/tool/tsh $(FLAGS) $(ADDFLAGS) \
 		| tee $(TEST_LOG_DIR)/unit.json \
 		| ${RENDER_TESTS}
 	$(CGOFLAG) go test -cover -json -tags "$(PAM_TAG) $(FIPS_TAG) $(BPF_TAG) $(RDPCLIENT_TAG)" -test.run=TestChaos $(CHAOS_FOLDERS) \
@@ -984,7 +984,7 @@ goinstall:
 install: build
 	@echo "\n** Make sure to run 'make install' as root! **\n"
 	cp -f $(BUILDDIR)/tctl      $(BINDIR)/
-	cp -f $(BUILDDIR)/tsh       $(BINDIR)/
+	cp -f $(BUILDDIR)/ish       $(BINDIR)/
 	cp -f $(BUILDDIR)/idemeum  $(BINDIR)/
 	mkdir -p $(DATADIR)
 

@@ -539,7 +539,7 @@ func buildCommand(c *ExecCommand, localUser *user.User, tty *os.File, pty *os.Fi
 	// If the server allows reading in of ~/.tsh/environment read it in
 	// and pass environment variables along to new session.
 	if c.PermitUserEnvironment {
-		filename := filepath.Join(localUser.HomeDir, ".tsh", "environment")
+		filename := filepath.Join(localUser.HomeDir, ".ish", "environment")
 		userEnvs, err := utils.ReadEnvironmentFile(filename)
 		if err != nil {
 			return nil, trace.Wrap(err)
