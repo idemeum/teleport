@@ -1044,7 +1044,6 @@ Resources:
   # where teleport stores all relevant state
   MainTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
     Properties:
       TableName: !Join ["_", [RemoteAccessMain, !Ref TenantName]]
       BillingMode: PAY_PER_REQUEST
@@ -1085,7 +1084,6 @@ Resources:
   # trying to renew and manage letsencrypt certificate
   LocksTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Delete
     Properties:
       TableName: !Join ["_", [RemoteAccessLocks, !Ref TenantName]]
       BillingMode: PAY_PER_REQUEST
@@ -1116,7 +1114,6 @@ Resources:
 
   EventsTable:
     Type: AWS::DynamoDB::Table
-    DeletionPolicy: Retain
     Properties:
       TableName: !Join ["_", [RemoteAccessEvents, !Ref TenantName]]
       BillingMode: PAY_PER_REQUEST
