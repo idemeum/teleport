@@ -31,7 +31,7 @@ const metaRedirectHTML = `
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Teleport Redirection Service</title>
+		<title>Idemeum Redirection Service</title>
 		<meta http-equiv="cache-control" content="no-cache"/>
 		<meta http-equiv="refresh" content="0;URL='{{.}}'" />
 	</head>

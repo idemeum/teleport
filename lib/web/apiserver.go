@@ -90,7 +90,7 @@ import (
 
 const (
 	// SSOLoginFailureMessage is a generic error message to avoid disclosing sensitive SSO failure messages.
-	SSOLoginFailureMessage = "Failed to login. Please check Teleport's log for more details."
+	SSOLoginFailureMessage = "Failed to login. Please contact ideneum support."
 )
 
 // healthCheckAppServerFunc defines a function used to perform a health check
