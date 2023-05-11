@@ -101,6 +101,7 @@ import (
 	"github.com/gravitational/teleport/lib/proxy"
 	"github.com/gravitational/teleport/lib/proxy/clusterdial"
 	"github.com/gravitational/teleport/lib/proxy/peer"
+	"github.com/gravitational/teleport/lib/publisher"
 	restricted "github.com/gravitational/teleport/lib/restrictedsession"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/services"
@@ -1575,6 +1576,8 @@ func (process *TeleportProcess) initAuthService() error {
 		TraceClient:             traceClt,
 		FIPS:                    cfg.FIPS,
 		LoadAllCAs:              cfg.Auth.LoadAllCAs,
+		TenantUrl:               cfg.TenantUrl,
+		AppPublisher:            publisher.NewAppPublisher(cfg.Auth.AppPublisherConfig),
 	}, func(as *auth.Server) error {
 		if !process.Config.CachePolicy.Enabled {
 			return nil

@@ -55,6 +55,7 @@ import (
 	dtconfig "github.com/gravitational/teleport/lib/devicetrust/config"
 	"github.com/gravitational/teleport/lib/events"
 	"github.com/gravitational/teleport/lib/modules"
+	"github.com/gravitational/teleport/lib/publisher"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/local"
 	"github.com/gravitational/teleport/lib/session"
@@ -1200,7 +1201,12 @@ func (a *ServerWithRoles) UpsertNode(ctx context.Context, s types.Server) (*type
 	if err := a.action(s.GetNamespace(), types.KindNode, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.UpsertNode(ctx, s)
+	keepAlive, err := a.authServer.UpsertNode(ctx, s)
+
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Server)
+	}
+	return keepAlive, err
 }
 
 // KeepAliveServer updates expiry time of a server resource.
@@ -1385,7 +1391,11 @@ func (a *ServerWithRoles) DeleteAllNodes(ctx context.Context, namespace string) 
 	if err := a.action(namespace, types.KindNode, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteAllNodes(ctx, namespace)
+	err := a.authServer.DeleteAllNodes(ctx, namespace)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Server)
+	}
+	return err
 }
 
 // DeleteNode deletes node in the namespace
@@ -1393,7 +1403,11 @@ func (a *ServerWithRoles) DeleteNode(ctx context.Context, namespace, node string
 	if err := a.action(namespace, types.KindNode, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteNode(ctx, namespace, node)
+	err := a.authServer.DeleteNode(ctx, namespace, node)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Server)
+	}
+	return err
 }
 
 // GetNode gets a node by name and namespace.
@@ -4674,7 +4688,11 @@ func (a *ServerWithRoles) UpsertKubeServiceV2(ctx context.Context, s types.Serve
 	if err := a.action(apidefaults.Namespace, types.KindKubeService, types.VerbCreate, types.VerbUpdate); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.UpsertKubeServiceV2(ctx, s)
+	keepAlive, err := a.authServer.UpsertKubeServiceV2(ctx, s)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Kubernetes)
+	}
+	return keepAlive, err
 }
 
 func (a *ServerWithRoles) checkAccessToKubeCluster(cluster types.KubeCluster) error {
@@ -4763,7 +4781,11 @@ func (a *ServerWithRoles) DeleteKubeService(ctx context.Context, name string) er
 	if err := a.action(apidefaults.Namespace, types.KindKubeService, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteKubeService(ctx, name)
+	err := a.authServer.DeleteKubeService(ctx, name)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Kubernetes)
+	}
+	return err
 }
 
 // DeleteAllKubeService deletes all registered kubernetes services.
@@ -4771,7 +4793,11 @@ func (a *ServerWithRoles) DeleteAllKubeServices(ctx context.Context) error {
 	if err := a.action(apidefaults.Namespace, types.KindKubeService, types.VerbDelete); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteAllKubeServices(ctx)
+	err := a.authServer.DeleteAllKubeServices(ctx)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Kubernetes)
+	}
+	return err
 }
 
 // GetNetworkRestrictions retrieves all the network restrictions (allow/deny lists).
@@ -4976,7 +5002,11 @@ func (a *ServerWithRoles) CreateApp(ctx context.Context, app types.Application) 
 	if err := a.checkAccessToApp(app); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.CreateApp(ctx, app))
+	err := trace.Wrap(a.authServer.CreateApp(ctx, app))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return err
 }
 
 // UpdateApp updates existing application resource.
@@ -4996,7 +5026,11 @@ func (a *ServerWithRoles) UpdateApp(ctx context.Context, app types.Application) 
 	if err := a.checkAccessToApp(app); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.UpdateApp(ctx, app))
+	err = trace.Wrap(a.authServer.UpdateApp(ctx, app))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return err
 }
 
 // GetApp returns specified application resource.
@@ -5045,7 +5079,11 @@ func (a *ServerWithRoles) DeleteApp(ctx context.Context, name string) error {
 	if err := a.checkAccessToApp(app); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.DeleteApp(ctx, name))
+	err = trace.Wrap(a.authServer.DeleteApp(ctx, name))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Webapp)
+	}
+	return err
 }
 
 // DeleteAllApps removes all application resources.
@@ -5065,6 +5103,7 @@ func (a *ServerWithRoles) DeleteAllApps(ctx context.Context) error {
 			}
 		}
 	}
+	publishAppChanges(a.authServer, publisher.Webapp)
 	return nil
 }
 
@@ -5208,7 +5247,11 @@ func (a *ServerWithRoles) CreateDatabase(ctx context.Context, database types.Dat
 	if err := a.checkAccessToDatabase(database); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.CreateDatabase(ctx, database))
+	err := trace.Wrap(a.authServer.CreateDatabase(ctx, database))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return err
 }
 
 // UpdateDatabase updates existing database resource.
@@ -5228,7 +5271,11 @@ func (a *ServerWithRoles) UpdateDatabase(ctx context.Context, database types.Dat
 	if err := a.checkAccessToDatabase(database); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.UpdateDatabase(ctx, database))
+	err = trace.Wrap(a.authServer.UpdateDatabase(ctx, database))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return err
 }
 
 // GetDatabase returns specified database resource.
@@ -5277,7 +5324,11 @@ func (a *ServerWithRoles) DeleteDatabase(ctx context.Context, name string) error
 	if err := a.checkAccessToDatabase(database); err != nil {
 		return trace.Wrap(err)
 	}
-	return trace.Wrap(a.authServer.DeleteDatabase(ctx, name))
+	err = trace.Wrap(a.authServer.DeleteDatabase(ctx, name))
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Database)
+	}
+	return err
 }
 
 // DeleteAllDatabases removes all database resources.
@@ -5297,6 +5348,7 @@ func (a *ServerWithRoles) DeleteAllDatabases(ctx context.Context) error {
 			}
 		}
 	}
+	publishAppChanges(a.authServer, publisher.Database)
 	return nil
 }
 
@@ -5369,7 +5421,11 @@ func (a *ServerWithRoles) CreateWindowsDesktop(ctx context.Context, s types.Wind
 	if err := a.action(apidefaults.Namespace, types.KindWindowsDesktop, types.VerbCreate); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.CreateWindowsDesktop(ctx, s)
+	err := a.authServer.CreateWindowsDesktop(ctx, s)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return err
 }
 
 // UpdateWindowsDesktop updates an existing windows desktop host.
@@ -5394,7 +5450,12 @@ func (a *ServerWithRoles) UpdateWindowsDesktop(ctx context.Context, s types.Wind
 	if err := a.checkAccessToWindowsDesktop(s); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.UpdateWindowsDesktop(ctx, s)
+	err = a.authServer.UpdateWindowsDesktop(ctx, s)
+
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return err
 }
 
 // UpsertWindowsDesktop updates a windows desktop resource, creating it if it doesn't exist.
@@ -5447,7 +5508,11 @@ func (a *ServerWithRoles) DeleteWindowsDesktop(ctx context.Context, hostID, name
 	if err := a.checkAccessToWindowsDesktop(desktop[0]); err != nil {
 		return trace.Wrap(err)
 	}
-	return a.authServer.DeleteWindowsDesktop(ctx, hostID, name)
+	err = a.authServer.DeleteWindowsDesktop(ctx, hostID, name)
+	if err == nil {
+		publishAppChanges(a.authServer, publisher.Desktop)
+	}
+	return err
 }
 
 // DeleteAllWindowsDesktops removes all registered windows desktop hosts.
@@ -5467,7 +5532,8 @@ func (a *ServerWithRoles) DeleteAllWindowsDesktops(ctx context.Context) error {
 			}
 		}
 	}
-	return nil
+	publishAppChanges(a.authServer, publisher.Desktop)
+	return err
 }
 
 func (a *ServerWithRoles) filterWindowsDesktops(desktops []types.WindowsDesktop) ([]types.WindowsDesktop, error) {
@@ -5991,4 +6057,11 @@ func verbsToReplaceResourceWithOrigin(stored types.ResourceWithOrigin) []string 
 		verbs = append(verbs, types.VerbCreate)
 	}
 	return verbs
+}
+
+func publishAppChanges(server *Server, appType publisher.RemoteAppType) {
+	server.AppPublisher.Publish(publisher.AppChangeEvent{
+		AppType: appType,
+		Tenant:  server.GetTenantUrl(),
+	})
 }

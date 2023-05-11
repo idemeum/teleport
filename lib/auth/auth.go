@@ -82,6 +82,7 @@ import (
 	"github.com/gravitational/teleport/lib/modules"
 	"github.com/gravitational/teleport/lib/observability/metrics"
 	"github.com/gravitational/teleport/lib/observability/tracing"
+	"github.com/gravitational/teleport/lib/publisher"
 	"github.com/gravitational/teleport/lib/release"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/local"
@@ -297,6 +298,8 @@ func NewServer(cfg *InitConfig, opts ...ServerOption) (*Server, error) {
 		traceClient:     cfg.TraceClient,
 		fips:            cfg.FIPS,
 		loadAllCAs:      cfg.LoadAllCAs,
+		tenantUrl:       cfg.TenantUrl,
+		AppPublisher:    cfg.AppPublisher,
 	}
 	as.inventory = inventory.NewController(&as, services, inventory.WithAuthServerID(cfg.HostUUID))
 	for _, o := range opts {
@@ -577,6 +580,15 @@ type Server struct {
 	loginHooksMu sync.RWMutex
 	// loginHooks are a list of hooks that will be called on login.
 	loginHooks []LoginHook
+
+	//Tenant Url
+	tenantUrl string
+	//App Publisher
+	AppPublisher publisher.AppPublisher
+}
+
+func (a *Server) GetTenantUrl() string {
+	return a.tenantUrl
 }
 
 // SetSAMLService registers svc as the SAMLService that provides the SAML

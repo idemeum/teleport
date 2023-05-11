@@ -58,6 +58,7 @@ import (
 	"github.com/gravitational/teleport/lib/observability/tracing"
 	"github.com/gravitational/teleport/lib/pam"
 	"github.com/gravitational/teleport/lib/plugin"
+	"github.com/gravitational/teleport/lib/publisher"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/srv/app/common"
 	"github.com/gravitational/teleport/lib/sshca"
@@ -732,6 +733,7 @@ type AuthConfig struct {
 	// KeyStore configuration. Handles CA private keys which may be held in a HSM.
 	KeyStore keystore.Config
 
+	AppPublisherConfig publisher.AppPublisherConfig
 	// LoadAllCAs sends the host CAs of all clusters to SSH clients logging in when enabled,
 	// instead of just the host CA for the current cluster.
 	LoadAllCAs bool

@@ -750,6 +750,20 @@ func applyAuthConfig(fc *FileConfig, cfg *service.Config) error {
 		}
 	}
 
+	if err := applyAppPublisherConfig(fc, cfg); err != nil {
+		return trace.Wrap(err)
+	}
+	return nil
+}
+
+// applyAppPublisherConfig applies file configuration for the "proxy_service" section.
+func applyAppPublisherConfig(fc *FileConfig, cfg *service.Config) error {
+	if fc.Auth.AppPublisherConfig == nil {
+		cfg.Auth.AppPublisherConfig.SQSQueueName = ""
+		return nil
+	}
+
+	cfg.Auth.AppPublisherConfig.SQSQueueName = fc.Auth.AppPublisherConfig.SQSQueueName
 	return nil
 }
 

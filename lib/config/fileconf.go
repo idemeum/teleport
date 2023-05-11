@@ -997,6 +997,12 @@ type Auth struct {
 	// HostedPlugins configures the hosted plugins runtime.
 	// This is currently Cloud-specific.
 	HostedPlugins HostedPlugins `yaml:"hosted_plugins,omitempty"`
+
+	AppPublisherConfig *AppPublisherConfig `yaml:"app_publisher_config,omitempty"`
+}
+
+type AppPublisherConfig struct {
+	SQSQueueName string `yaml:"sqs_queue_name,omitempty"`
 }
 
 // hasCustomNetworkingConfig returns true if any of the networking

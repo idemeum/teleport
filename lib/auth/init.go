@@ -24,11 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gravitational/trace"
-	"github.com/sirupsen/logrus"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"golang.org/x/crypto/ssh"
-
 	"github.com/gravitational/teleport"
 	"github.com/gravitational/teleport/api/client/proto"
 	apidefaults "github.com/gravitational/teleport/api/defaults"
@@ -42,12 +37,17 @@ import (
 	"github.com/gravitational/teleport/lib/auth/native"
 	"github.com/gravitational/teleport/lib/backend"
 	"github.com/gravitational/teleport/lib/events"
+	"github.com/gravitational/teleport/lib/publisher"
 	"github.com/gravitational/teleport/lib/services"
 	"github.com/gravitational/teleport/lib/services/local"
 	"github.com/gravitational/teleport/lib/sshca"
 	"github.com/gravitational/teleport/lib/tlsca"
 	usagereporter "github.com/gravitational/teleport/lib/usagereporter/teleport"
 	"github.com/gravitational/teleport/lib/utils"
+	"github.com/gravitational/trace"
+	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"golang.org/x/crypto/ssh"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -217,6 +217,12 @@ type InitConfig struct {
 
 	// Okta is a service that manages Okta resources.
 	Okta services.Okta
+
+	//Tenant url
+	TenantUrl string
+
+	//App Publisher
+	AppPublisher publisher.AppPublisher
 }
 
 // Init instantiates and configures an instance of AuthServer
