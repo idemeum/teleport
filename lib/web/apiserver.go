@@ -563,7 +563,7 @@ func (h *Handler) bindDefaultEndpoints() {
 	h.PUT("/webapi/users", h.WithAuth(h.updateUserHandle))
 	h.GET("/webapi/users", h.WithAuth(h.getUsersHandle))
 	h.DELETE("/webapi/users/:username", h.WithAuth(h.deleteUserHandle))
-
+	h.PUT("/webapi/users/traits", h.WithAuth(h.replaceUserTraits))
 	// We have an overlap route here, please see godoc of handleGetUserOrResetToken
 	// h.GET("/webapi/users/:username", h.WithAuth(h.getUserHandle))
 	// h.GET("/webapi/users/password/token/:token", httplib.MakeHandler(h.getResetPasswordTokenHandle))
