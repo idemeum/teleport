@@ -305,6 +305,9 @@ type Config struct {
 	// and the value is retrieved via AuthServerAddresses() and set via SetAuthServerAddresses()
 	// as we still need to keep multiple addresses and return them for older config versions.
 	authServers []utils.NetAddr
+
+	//Tenant Url
+	TenantUrl string
 }
 
 // AuthServerAddresses returns the value of authServers for config versions v1 and v2 and

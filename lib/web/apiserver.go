@@ -238,6 +238,8 @@ type Config struct {
 
 	// UI provides config options for the web UI
 	UI webclient.UIConfig
+
+	TenantUrl string
 }
 
 type APIHandler struct {
@@ -555,6 +557,8 @@ func (h *Handler) bindDefaultEndpoints() {
 	h.POST("/webapi/sessions/web", httplib.WithCSRFProtection(h.WithLimiterHandlerFunc(h.createWebSession)))
 	h.DELETE("/webapi/sessions/web", h.WithAuth(h.deleteWebSession))
 	h.POST("/webapi/sessions/web/renew", h.WithAuth(h.renewWebSession))
+	// idemeum session
+	h.POST("/webapi/sessions/idemeum", httplib.MakeHandler(h.createSessionForIdemeumServiceToken))
 	h.POST("/webapi/users", h.WithAuth(h.createUserHandle))
 	h.PUT("/webapi/users", h.WithAuth(h.updateUserHandle))
 	h.GET("/webapi/users", h.WithAuth(h.getUsersHandle))
@@ -1930,6 +1934,40 @@ func (h *Handler) renewWebSession(w http.ResponseWriter, r *http.Request, params
 	res.SessionExpires = newSession.GetExpiryTime()
 
 	return res, nil
+}
+
+type IdemeumServiceTokenRequest struct {
+	ServiceToken string `json:"serviceToken"`
+}
+
+func (h *Handler) createSessionForIdemeumServiceToken(w http.ResponseWriter, r *http.Request, params httprouter.Params) (interface{}, error) {
+	if h.cfg.TenantUrl == "" {
+		return nil, trace.BadParameter("Failed to issue session: Tenant Url not configured")
+	}
+
+	req := IdemeumServiceTokenRequest{}
+	if err := httplib.ReadJSON(r, &req); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if req.ServiceToken == "" {
+		return nil, trace.BadParameter("Failed to issue session: Missing 'ServiceToken' field")
+	}
+
+	newSession, err := h.auth.ValidateServiceToken(r.Context(), req.ServiceToken, h.cfg.TenantUrl)
+	if err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	if err := SetSessionCookie(w, newSession.GetUser(), newSession.GetName()); err != nil {
+		return nil, trace.Wrap(err)
+	}
+
+	ctx, err := h.auth.newSessionContext(r.Context(), newSession.GetUser(), newSession.GetName())
+	if err != nil {
+		return nil, trace.AccessDenied("need auth")
+	}
+	return newSessionResponse(ctx)
 }
 
 type changeUserAuthenticationRequest struct {

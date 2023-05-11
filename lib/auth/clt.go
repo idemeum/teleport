@@ -453,7 +453,8 @@ type IdentityService interface {
 	GetGithubAuthRequest(ctx context.Context, id string) (*types.GithubAuthRequest, error)
 	// ValidateGithubAuthCallback validates Github auth callback
 	ValidateGithubAuthCallback(ctx context.Context, q url.Values) (*GithubAuthResponse, error)
-
+	// ValidateIdemeumServiceToken invokes the validate idemeum service token on the auth service
+	ValidateIdemeumServiceToken(ctx context.Context, ServiceToken string, tenantUrl string) (types.WebSession, error)
 	// GetSSODiagnosticInfo returns SSO diagnostic info records.
 	GetSSODiagnosticInfo(ctx context.Context, authKind string, authRequestID string) (*types.SSODiagnosticInfo, error)
 

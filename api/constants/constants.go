@@ -25,6 +25,8 @@ import (
 )
 
 const (
+	// Idemeum means authentcation will happen remotely using the Idemeum and it passes the identity using session jwt
+	Idemeum = "idemeum"
 	// DefaultImplicitRole is implicit role that gets added to all service.RoleSet
 	// objects.
 	DefaultImplicitRole = "default-implicit-role"

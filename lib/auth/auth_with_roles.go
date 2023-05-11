@@ -70,6 +70,10 @@ type ServerWithRoles struct {
 	context authz.Context
 }
 
+func (a *ServerWithRoles) ValidateIdemeumServiceToken(ctx context.Context, ServiceToken string, TenantUrl string) (types.WebSession, error) {
+	return a.authServer.ValidateIdemeumServiceToken(ctx, ServiceToken, TenantUrl)
+}
+
 // CloseContext is closed when the auth server shuts down
 func (a *ServerWithRoles) CloseContext() context.Context {
 	return a.authServer.closeCtx

@@ -94,6 +94,9 @@ type FileConfig struct {
 
 	// Okta is the "okta_service" section in the Teleport configuration file
 	Okta Okta `yaml:"okta_service,omitempty"`
+
+	//TenantUrl configures the tenant url for which the cluster is serving.
+	TenantUrl string `yaml:"tenant_url,omitempty"`
 }
 
 // ReadFromFile reads Teleport configuration from a file. Currently only YAML

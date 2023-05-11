@@ -955,6 +955,19 @@ func (c *HTTPClient) ValidateGithubAuthCallback(ctx context.Context, q url.Value
 	return &response, nil
 }
 
+// ValidateIdemeumServiceToken invokes the validate idemeum service token on the auth service
+func (c *Client) ValidateIdemeumServiceToken(ctx context.Context, ServiceToken string, tenantUrl string) (types.WebSession, error) {
+	out, err := c.PostJSON(ctx, c.Endpoint("idemeum", "token", "validate"), IdemeumServiceTokenRequest{
+		ServiceToken: ServiceToken,
+		TenantUrl:    tenantUrl})
+	if err != nil {
+		log.Error("Idemeum token validate request failed with error", err)
+		return nil, trace.Wrap(err)
+	}
+	log.Infof("Request idemeum/token/validate completed with code: %v \n", out.Code())
+	return services.UnmarshalWebSession(out.Bytes())
+}
+
 // GetSessionChunk allows clients to receive a byte array (chunk) from a recorded
 // session stream, starting from 'offset', up to 'max' in length. The upper bound
 // of 'max' is set to events.MaxChunkBytes
