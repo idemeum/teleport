@@ -126,7 +126,7 @@ func ProxyKeyDir(baseDir, proxy string) string {
 //
 // <baseDir>/keys/<proxy>/<username>.
 func UserKeyPath(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username))
 }
 
 // TLSCertPath returns the path to the users's TLS certificate
@@ -134,7 +134,7 @@ func UserKeyPath(baseDir, proxy, username string) string {
 //
 // <baseDir>/keys/<proxy>/<username>-x509.pem
 func TLSCertPath(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+fileExtTLSCert)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+fileExtTLSCert)
 }
 
 // SSHCAsPath returns the path to the users's SSH CA's certificates
@@ -142,7 +142,7 @@ func TLSCertPath(baseDir, proxy, username string) string {
 //
 // <baseDir>/keys/<proxy>/<username>.pub
 func SSHCAsPath(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+fileExtPub)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+fileExtPub)
 }
 
 // CAsDir returns path to trusted clusters certificates directory.
@@ -171,7 +171,7 @@ func TLSCAsPathCluster(baseDir, proxy, cluster string) string {
 //
 // <baseDir>/keys/<proxy>/<username>-ssh
 func SSHDir(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+sshDirSuffix)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+sshDirSuffix)
 }
 
 // PPKFilePath returns the path to the user's PuTTY PPK-formatted keypair
@@ -179,7 +179,7 @@ func SSHDir(baseDir, proxy, username string) string {
 //
 // <baseDir>/keys/<proxy>/<username>.ppk
 func PPKFilePath(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+fileExtPPK)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+fileExtPPK)
 }
 
 // SSHCertPath returns the path to the users's SSH certificate
@@ -193,7 +193,7 @@ func SSHCertPath(baseDir, proxy, username, cluster string) string {
 // OldSSHCertPath returns the old (before v6.1) path to the profile's ssh certificate.
 // DELETE IN 8.0.0
 func OldSSHCertPath(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+fileExtSSHCert)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+fileExtSSHCert)
 }
 
 // AppDir returns the path to the user's app directory
@@ -201,7 +201,7 @@ func OldSSHCertPath(baseDir, proxy, username string) string {
 //
 // <baseDir>/keys/<proxy>/<username>-app
 func AppDir(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+appDirSuffix)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+appDirSuffix)
 }
 
 // AppCertDir returns the path to the user's app cert directory
@@ -233,7 +233,7 @@ func AppLocalCAPath(baseDir, proxy, username, cluster, appname string) string {
 //
 // <baseDir>/keys/<proxy>/<username>-db
 func DatabaseDir(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+dbDirSuffix)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+dbDirSuffix)
 }
 
 // DatabaseCertDir returns the path to the user's database cert directory
@@ -257,7 +257,7 @@ func DatabaseCertPath(baseDir, proxy, username, cluster, dbname string) string {
 //
 // <baseDir>/keys/<proxy>/<username>-kube
 func KubeDir(baseDir, proxy, username string) string {
-	return filepath.Join(ProxyKeyDir(baseDir, proxy), username+kubeDirSuffix)
+	return filepath.Join(ProxyKeyDir(baseDir, proxy), fileSafeUsername(username)+kubeDirSuffix)
 }
 
 // KubeCertDir returns the path to the user's kube cert directory
@@ -308,4 +308,16 @@ func TrimCertPathSuffix(path string) string {
 	trimmedPath := strings.TrimSuffix(path, fileExtTLSCert)
 	trimmedPath = strings.TrimSuffix(trimmedPath, fileExtSSHCert)
 	return trimmedPath
+}
+
+/**
+ * The idemeum username has the following format: did:dvmi:<uuid>. On windows filesystem the ":"
+ * is not a valid character so the certs and public/private keys cannot be stored on the disk. 
+ * If the username starts with "did:dvmi:"" we will replace it with "idemeum-". Else, keep the username as is
+  */
+  func fileSafeUsername(username string) string {
+	if (strings.HasPrefix(username, "did:dvmi:")) {
+		return "idememum-" + strings.TrimPrefix(username, "did:dvmi:")
+	}
+	return username
 }
