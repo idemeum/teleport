@@ -237,6 +237,7 @@ if [[ "${TELEPORT_ROLE}" == "auth" ]]; then
     # Teleport Auth server is using DynamoDB as a backend
     # On AWS, see dynamodb.tf for details
     cat >${USE_CONFIG_PATH} <<EOF
+version: v2    
 tenant_url: https://${IDEMEUM_TENANT}
 idemeum_presets_enabled: true
 teleport:
@@ -265,6 +266,7 @@ auth_service:
   keep_alive_interval: 1m
   keep_alive_count_max: 3
   listen_addr: 0.0.0.0:3025
+  proxy_listener_mode: multiplex
   authentication:
     type: saml
     local_auth: true
@@ -316,6 +318,7 @@ elif [[ "${TELEPORT_ROLE}" == "proxy" ]]; then
     # Teleport proxy proxies and optionally records
     # SSH sessions
     cat >${USE_CONFIG_PATH} <<EOF
+version: v2
 tenant_url: https://${IDEMEUM_TENANT}
 idemeum_presets_enabled: true
 teleport:
