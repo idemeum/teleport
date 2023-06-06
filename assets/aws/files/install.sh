@@ -81,7 +81,7 @@ else
             curl ${CURL_OPTS} -o teleport.tar.gz https://asset.idemeumlab.com/teleport/${TELEPORT_VERSION}/teleport-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz
         fi
         tar -xzf teleport.tar.gz
-        cp teleport/tctl teleport/tsh teleport/teleport /usr/local/bin
+        cp teleport/tctl teleport/ish teleport/teleport /usr/local/bin
         rm -rf /tmp/teleport.tar.gz /tmp/teleport
     else
         TARBALL_FILENAME="/tmp/files/teleport-ent-v${TELEPORT_VERSION}-linux-amd64-bin.tar.gz"
