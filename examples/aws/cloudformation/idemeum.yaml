@@ -44,6 +44,7 @@ Parameters:
     - 1.0.0.1918067ae
     - 1.0.0.b50a1788d
     - 1.0.0.3d7fc175b4
+    - 1.0.0.b1822de336
 
   Mode:
     Description: Allows deactivation of stack that would shut down compute and load balancers
@@ -61,7 +62,7 @@ Parameters:
   KmsKeyId:
     Description: KMS Key Id to encrypt or decrypt the sensitive data
     Type: "AWS::SSM::Parameter::Value<String>"
-    Default: "/Services/Kms/IdemeumRemoteAccess-CMK-Arn" 
+    Default: "/Services/Kms/IdemeumRemoteAccess-CMK-Arn"
 
 Mappings:
 
@@ -93,7 +94,11 @@ Mappings:
     1.0.0.3d7fc175b4:
       GitHash: 3d7fc175b4
       APSOUTH1: ami-0f19f59632bacb85e
-      USAWEST2: ami-06c219a066aef32d2  
+      USAWEST2: ami-06c219a066aef32d2
+    1.0.0.b1822de336:
+      GitHash: b1822de336
+      APSOUTH1: ami-0b5cc1724b87caf6c
+      USAWEST2: ami-0ce58cadbb544aa6d
 
   DeploymentTypeConfig:
     LA-Starter:
