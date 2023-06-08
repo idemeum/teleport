@@ -150,7 +150,8 @@ EOS
 
 write_ssh_and_tunnel_section() {
     PASSED_EXTERNAL_TUNNEL_PORT="$1"
-    SSH_PORT=3023
+    # idemeum always uses TLS routing so the only export port is 443
+    SSH_PORT=443 
     POSTGRES_PORT=443
     if [[ "${TELEPORT_PROXY_SERVER_LB}" != "" ]]; then
         # ACM
