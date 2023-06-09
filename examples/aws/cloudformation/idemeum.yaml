@@ -462,11 +462,6 @@ Resources:
       VpcId: '{{resolve:ssm:/Services/VPC/Id}}'
       SecurityGroupIngress:
         - IpProtocol: tcp
-          Description: Port for SSH clients
-          FromPort: 3023
-          ToPort: 3023
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
           Description: Port for HTTPS connections
           FromPort: !If [HighAvailablity, '3080', '443']
           ToPort: !If [HighAvailablity, '3080', '443']
