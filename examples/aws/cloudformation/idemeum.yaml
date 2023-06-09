@@ -45,6 +45,7 @@ Parameters:
     - 1.0.0.b50a1788d
     - 1.0.0.3d7fc175b4
     - 1.0.0.b1822de336
+    - 1.0.0.dbdac781d9
 
   Mode:
     Description: Allows deactivation of stack that would shut down compute and load balancers
@@ -99,6 +100,10 @@ Mappings:
       GitHash: b1822de336
       APSOUTH1: ami-0b5cc1724b87caf6c
       USAWEST2: ami-0ce58cadbb544aa6d
+    1.0.0.dbdac781d9:
+      GitHash: dbdac781d9
+      APSOUTH1: ami-0c01835a54a822fee
+      USAWEST2: ami-0ab23d10bc975da1b
 
   DeploymentTypeConfig:
     LA-Starter:
