@@ -30,6 +30,8 @@ import (
 	apiutils "github.com/gravitational/teleport/api/utils"
 	"github.com/gravitational/teleport/lib/auth"
 	"github.com/gravitational/teleport/lib/defaults"
+	"github.com/gravitational/teleport/lib/events"
+	"github.com/gravitational/teleport/lib/events/filesessions"
 	"github.com/gravitational/teleport/lib/limiter"
 	"github.com/gravitational/teleport/lib/reversetunnel"
 	"github.com/gravitational/teleport/lib/services"
@@ -84,6 +86,21 @@ func (process *TeleportProcess) initWindowsDesktopServiceRegistered(log *logrus.
 	}
 
 	proxyGetter := reversetunnel.NewConnectedProxyGetter()
+
+	// Start uploader that will scan a path on disk and upload completed
+	// sessions to the Auth Server.
+	uploaderCfg := filesessions.UploaderConfig{
+		Streamer: accessPoint,
+		AuditLog: conn.Client,
+	}
+	completerCfg := events.UploadCompleterConfig{
+		SessionTracker: conn.Client,
+	}
+
+	log.Info("Starting the uploader service for Windows service")
+	if err := process.initUploaderService(uploaderCfg, completerCfg); err != nil {
+		return trace.Wrap(err)
+	}
 
 	useTunnel := conn.UseTunnel()
 	// This service can run in 2 modes:
