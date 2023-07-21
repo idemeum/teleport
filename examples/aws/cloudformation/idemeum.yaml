@@ -36,7 +36,7 @@ Parameters:
   RemoteAccessVersion:
     Description: Remote Access version
     Type: String
-    Default: 1.0.0.3d7fc175b4
+    Default: 1.0.0.4f456ba699
     AllowedValues:
     - 1.0.0.c8292bf0e
     - 1.0.0.5cde3fe13
